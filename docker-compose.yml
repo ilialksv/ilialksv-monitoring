@@ -1,8 +1,8 @@
-# Dokploy подставляет переменные из Environment приложения.
-# В команде Compose в Dokploy укажи --force-recreate, иначе Grafana не
-# перечитает JSON дашбордов с bind mount.
-# Публичны только grafana (3000), glitchtip (8000) и vmauth (8427).
-# Остальные сервисы остаются в сети monitoring.
+# Dokploy injects these variables from the application Environment.
+# Set the Dokploy Compose command to --force-recreate, or Grafana will not
+# reread dashboard JSON from the bind mount.
+# Only grafana (3000), glitchtip (8000), and vmauth (8427) are public.
+# Every other service stays on the monitoring network.
 
 x-glitchtip-environment: &glitchtip-environment
   DATABASE_URL: postgres://${GLITCHTIP_POSTGRES_USER}:${GLITCHTIP_POSTGRES_PASSWORD}@glitchtip-postgres:5432/${GLITCHTIP_POSTGRES_DB}

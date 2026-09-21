@@ -3,6 +3,13 @@
 Canonical working guide for this repository. Tool-specific files may add
 workflow detail, but they must not contradict this file.
 
+## Language
+
+Write every repository artifact in English: comments, README files, agent
+rules, commit messages, dashboards, alerts, and configuration. This applies
+to every repository, not only this one. User-facing product copy that is
+intentionally localized stays in that locale; repository prose does not.
+
 ## Project Snapshot
 
 - Purpose: project-independent monitoring for Dokploy servers.

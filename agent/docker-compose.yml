@@ -1,7 +1,7 @@
-# Один экземпляр на deploy-сервер Dokploy, не на monitoring VPS.
-# Compose path в Dokploy: agent/docker-compose.yml
-# Сокет Docker нужен для обнаружения контейнеров. Это доступ уровня root
-# на этом сервере: агент читает метки и IP, наружу порты экспортеров не открывает.
+# One instance per Dokploy deploy server, not on the monitoring VPS.
+# Dokploy compose path: agent/docker-compose.yml
+# The Docker socket is required for container discovery. That is root-equivalent
+# access on this server: the agent reads labels and IPs, and publishes no exporter ports.
 
 services:
   vmagent:

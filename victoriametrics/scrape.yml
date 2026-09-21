@@ -4,8 +4,8 @@ global:
     stack: ilialksv-monitoring
 
 scrape_configs:
-  # Только хост самой monitoring VPS. Метрики приложений приходят
-  # remote write-ом от vmagent на других серверах.
+  # Monitoring VPS host only. Application metrics arrive by remote write
+  # from vmagent on the other servers.
   - job_name: node
     scrape_interval: 30s
     static_configs:

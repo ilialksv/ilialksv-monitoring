@@ -6,6 +6,7 @@ alwaysApply: true
 # Monitoring Core
 
 - Treat `AGENTS.md` as the canonical project contract.
+- Write all repository prose in English: comments, README files, rules, alerts, and configuration. The same rule applies to every repository.
 - This repository is project-independent. Do not hardcode a product into the central scrape config.
 - Do not commit secrets or real `.env` values.
 - Do not run mutating Docker commands unless the user explicitly asks for that exact command.

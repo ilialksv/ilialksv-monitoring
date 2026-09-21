@@ -1,4 +1,4 @@
-# vmauth подставляет %{ENV} при старте. Пароль не должен содержать кавычки.
+# vmauth substitutes %{ENV} at startup. The password must not contain quotes.
 users:
   - username: "%{VMAUTH_USERNAME}"
     password: "%{VMAUTH_PASSWORD}"

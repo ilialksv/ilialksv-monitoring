@@ -1,42 +1,42 @@
 # ilialksv-monitoring
 
-Общий мониторинг для проектов на Dokploy. Стек живёт на отдельной VPS и не знает заранее список приложений. Новый проект подключается метками контейнера. Новый сервер подключается отдельным деплоем агента и переменными окружения.
+Shared monitoring for projects deployed with Dokploy. The stack runs on its own VPS and does not know the application list in advance. A new project is attached with container labels. A new server is attached by deploying the agent and setting environment variables.
 
-Панель Dokploy одна: `dokploy.ilialksv.ru`. У каждого deploy-сервера свой Traefik, поэтому A-запись домена указывает на IP сервера, где крутится сервис, а не на IP панели.
+There is one Dokploy panel: `dokploy.ilialksv.ru`. Each deploy server has its own Traefik, so a domain's A record points at the IP of the server that runs the service, not at the panel IP.
 
-## Что где работает
+## What runs where
 
-| Сервис | Где | Снаружи |
+| Service | Where | Public |
 | --- | --- | --- |
-| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, node_exporter этой VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427` |
-| vmagent + node_exporter | Каждый deploy-сервер с приложениями | Ничего. Метрики уходят на ingest |
-| Postgres и Redis приложений | Сервер приложения, сервисы Dokploy | Только внутри `dokploy-network` |
+| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, node_exporter for this VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427` |
+| vmagent + node_exporter | Each deploy server that runs applications | Nothing. Metrics are pushed to ingest |
+| Application Postgres and Redis | Application server, Dokploy services | Only inside `dokploy-network` |
 
-Агент на Monitoring VPS не ставится. Хост этой машины скрейпит сам VictoriaMetrics.
+Do not install the agent on the monitoring VPS. VictoriaMetrics scrapes that host itself.
 
 ```mermaid
 flowchart LR
-  Agent["vmagent на сервере приложения"] -->|"HTTPS basic auth"| Vmauth["ingest.ilialksv.ru"]
+  Agent["vmagent on the app server"] -->|"HTTPS basic auth"| Vmauth["ingest.ilialksv.ru"]
   Vmauth --> VM["VictoriaMetrics"]
   VM --> Grafana["grafana.ilialksv.ru"]
   VM --> Vmalert["vmalert"]
   Vmalert --> Alertmanager
-  Apps["API и клиент"] -->|ошибки| GlitchTip["glitchtip.ilialksv.ru"]
+  Apps["API and client"] -->|errors| GlitchTip["glitchtip.ilialksv.ru"]
 ```
 
-## Домены
+## Domains
 
-Их можно переименовать в Dokploy, если записи ниже не подходят. A-запись каждого имени смотрит на Monitoring VPS.
+Rename these in Dokploy if the names below do not fit. Each A record points at the monitoring VPS.
 
-- `grafana.ilialksv.ru` → Grafana, порт контейнера `3000`
-- `glitchtip.ilialksv.ru` → GlitchTip, порт `8000`
-- `ingest.ilialksv.ru` → vmauth, порт `8427`
+- `grafana.ilialksv.ru` → Grafana, container port `3000`
+- `glitchtip.ilialksv.ru` → GlitchTip, port `8000`
+- `ingest.ilialksv.ru` → vmauth, port `8427`
 
-`dokploy.ilialksv.ru` остаётся на VPS панели.
+`dokploy.ilialksv.ru` stays on the panel VPS.
 
-## Как подключить проект
+## Connect a project
 
-На контейнере, который отдаёт `/metrics`, нужны метки. Пример уже стоит в compose бэкенда Genario.
+A container that serves `/metrics` needs labels. The Genario backend compose already has an example.
 
 ```yaml
 labels:
@@ -47,69 +47,69 @@ labels:
   monitoring.env: ${DEPLOY_ENVIRONMENT}
 ```
 
-`monitoring.job` становится меткой `job` (`backend`, `postgres`, `redis` или своё имя). `monitoring.project` и `monitoring.env` режут дашборды и алерты. Порт — внутренний порт контейнера, не порт хоста.
+`monitoring.job` becomes the `job` label (`backend`, `postgres`, `redis`, or another name). `monitoring.project` and `monitoring.env` filter dashboards and alerts. The port is the container port, not a host port.
 
-Центральный `victoriametrics/scrape.yml` при этом не меняется. Агент находит контейнер в `dokploy-network` и шлёт ряды на ingest.
+`victoriametrics/scrape.yml` stays unchanged. The agent finds the container on `dokploy-network` and remote-writes the series to ingest.
 
-Ошибки заводятся в UI GlitchTip: новый проект, DSN в env приложения. Для frontend Genario DSN вшивается в бандл на сборке (`VITE_GLITCHTIP_DSN`), поэтому смена домена GlitchTip требует нового билда, не только рестарта. У бэкенда `GLITCHTIP_DSN` читается при старте процесса.
+Errors are registered in the GlitchTip UI: create a project and put the DSN in the application env. The Genario frontend bakes `VITE_GLITCHTIP_DSN` into the bundle at build time, so a GlitchTip domain change needs a new frontend build, not only a restart. The backend reads `GLITCHTIP_DSN` when the process starts.
 
-Свои графики по нестандартным именам метрик кладутся паком. Папка `packs/genario/` — дашборды и алерты для `genario_http_*`. Postgres, Redis, хост и `up` работают без пака.
+Custom charts for non-standard metric names live in a pack. `packs/genario/` holds dashboards and alerts for `genario_http_*`. Postgres, Redis, host, and `up` work without a pack.
 
-## Как подключить сервер
+## Connect a server
 
-В Dokploy, на нужном deploy-сервере, отдельное Compose-приложение из этого репозитория:
+In Dokploy, on the target deploy server, create a separate Compose application from this repository:
 
 - Compose path: `agent/docker-compose.yml`
-- Env из `agent/.env.example`
-- `SERVER_NAME` уникален среди серверов, одно слово, например `genario`
+- Env from `agent/.env.example`
+- `SERVER_NAME` is unique across servers, one word, for example `genario`
 - `VMAGENT_REMOTE_WRITE_URL=https://ingest.ilialksv.ru/api/v1/write`
-- логин и пароль те же, что `VMAUTH_USERNAME` и `VMAUTH_PASSWORD` центрального стека
+- Username and password match `VMAUTH_USERNAME` and `VMAUTH_PASSWORD` on the central stack
 
-Автодеплой агента включается у этого приложения в Dokploy. GitHub Action в корне деплоит только центральный стек: у него один `DOKPLOY_APPLICATION_ID`.
+Turn on auto-deploy for that Dokploy application. The root GitHub Action deploys only the central stack: it has a single `DOKPLOY_APPLICATION_ID`.
 
-Сокет Docker у агента только на чтение, но это всё равно доступ уровня root на этом сервере. Порты 9100, 9187 и 9121 наружу не публикуются.
+The agent mounts the Docker socket read-only. That is still root-equivalent access on this server. Ports 9100, 9187, and 9121 are not published.
 
-`/metrics` бэкенда дополнительно закрыт `METRICS_ALLOWED_IPS`. Туда пишется подсеть `dokploy-network` (`docker network inspect dokploy-network`). Пустой список запрещает всех. Агент ходит в контейнер напрямую, не через Traefik.
+Backend `/metrics` is also closed by `METRICS_ALLOWED_IPS`. Set it to the `dokploy-network` subnet (`docker network inspect dokploy-network`). An empty list denies everyone. The agent calls the container directly, not through Traefik.
 
-Для postgres-exporter в env приложения задаётся `POSTGRES_EXPORTER_DATA_SOURCE_NAME`, отдельно от `POSTGRES_URL`. Если в URL ещё нет query string, добавь `?sslmode=disable`. Если `?` уже есть, добавь `&sslmode=disable`. Дописывать суффикс к `POSTGRES_URL` нельзя: второй `?` ломает строку.
+Set `POSTGRES_EXPORTER_DATA_SOURCE_NAME` in the application env, separate from `POSTGRES_URL`. If the URL has no query string, add `?sslmode=disable`. If it already has `?`, add `&sslmode=disable`. Do not append that suffix to `POSTGRES_URL`: a second `?` breaks the URL.
 
-## Runbook переноса Genario
+## Genario move runbook
 
-Код этого репозитория и панель готовятся до переключения DNS. Содержимое PostgreSQL переносишь ты. Redis поднимается пустым. История метрик и GlitchTip не переносится.
+Prepare this repository and the Dokploy panel before the DNS cutover. You restore the PostgreSQL contents. Redis starts empty. VictoriaMetrics history and GlitchTip events are not migrated.
 
-1. Запушь этот репозиторий в `ilialksv/ilialksv-monitoring`. В Dokploy заведи два deploy-сервера, если их ещё нет: Genario и Monitoring. Панель на них не переезжает.
-2. На Monitoring VPS задеплой корневой `docker-compose.yml`. В команде Compose укажи `--force-recreate`, иначе Grafana не подхватит новый JSON с bind mount. Пропиши env из `.env.example`, домены Grafana, GlitchTip и ingest. В GlitchTip заведи проекты API, workers и web. Prod и stage — окружения внутри проекта, не второй инстанс.
-3. На Genario VPS создай два Postgres и два Redis в Dokploy. Восстанови дампы PostgreSQL до первого деплоя бэкенда. В дампе уже есть таблица миграций Drizzle, повторный migrate будет пустым. Если migrate успеет создать пустую схему раньше дампа, восстановление придётся разбирать вручную.
-4. На этом же сервере создай приложения: backend compose для production и для stage, frontend application для production и для stage. Домены с префиксом `stage.` оставь теми же. В env бэкенда пропиши новые `POSTGRES_URL`, `REDIS_URL`, `POSTGRES_EXPORTER_DATA_SOURCE_NAME`, `METRICS_ALLOWED_IPS` и новый `GLITCHTIP_DSN`.
-5. Задеплой агент на Genario VPS. `SERVER_NAME=genario`.
-6. Обнови секреты GitHub Environment `production` и `stage`: `DOKPLOY_APPLICATION_ID` новых приложений, `DOKPLOY_URL` по-прежнему `https://dokploy.ilialksv.ru`, секреты GlitchTip и `VITE_GLITCHTIP_DSN`. Запушь frontend, чтобы бандл собрался с новым DSN. Workflow бэкенда и frontend не менялись.
-7. Переключи A-записи. Сначала домены `stage.`, потом production. Домены Genario смотрят на IP Genario VPS. Домены мониторинга смотрят на IP Monitoring VPS.
-8. Проверь stage, потом production:
-   - сайт и API открываются по старым именам;
-   - в Grafana, папка Hosts, есть сервер `genario` и сервер `monitoring`;
-   - в Datastores есть `project="genario"` для postgres и redis, оба env;
-   - в папке Genario запросы backend есть и для production, и для stage;
-   - тестовая ошибка клиента и API падает в новый GlitchTip.
-9. Выключи старые VPS frontend, backend, баз и старого мониторинга. Дырки в файрволе на 9100, 9187, 9121 и stage-портах больше не нужны.
+1. Push this repository to `ilialksv/ilialksv-monitoring`. In Dokploy, add two deploy servers if they are not there yet: Genario and Monitoring. The panel does not move.
+2. On the monitoring VPS, deploy the root `docker-compose.yml`. Set the Compose command to `--force-recreate`, or Grafana will not pick up new JSON from the bind mount. Fill env from `.env.example` and attach the Grafana, GlitchTip, and ingest domains. In GlitchTip, create projects for the API, workers, and web. Production and stage are environments inside a project, not a second instance.
+3. On the Genario VPS, create two Postgres services and two Redis services in Dokploy. Restore the PostgreSQL dumps before the first backend deploy. The dump already contains the Drizzle migrations table, so a later migrate is a no-op. If migrate creates an empty schema before the restore, the restore has to be untangled by hand.
+4. On that same server, create the applications: backend compose for production and for stage, frontend application for production and for stage. Keep the existing `stage.` domain prefix. In the backend env, set the new `POSTGRES_URL`, `REDIS_URL`, `POSTGRES_EXPORTER_DATA_SOURCE_NAME`, `METRICS_ALLOWED_IPS`, and `GLITCHTIP_DSN`.
+5. Deploy the agent on the Genario VPS. `SERVER_NAME=genario`.
+6. Update the GitHub Environment secrets for `production` and `stage`: `DOKPLOY_APPLICATION_ID` of the new applications, `DOKPLOY_URL` still `https://dokploy.ilialksv.ru`, the GlitchTip secrets, and `VITE_GLITCHTIP_DSN`. Push the frontend so the bundle is built with the new DSN. The backend and frontend workflows are unchanged.
+7. Switch A records. `stage.` domains first, then production. Genario domains point at the Genario VPS IP. Monitoring domains point at the monitoring VPS IP.
+8. Check stage, then production:
+   - the site and API open on the existing hostnames;
+   - Grafana, Hosts folder, shows servers `genario` and `monitoring`;
+   - Datastores shows `project="genario"` for postgres and redis, both envs;
+   - the Genario folder shows backend traffic for production and stage;
+   - a test client error and an API error land in the new GlitchTip.
+9. Turn off the old frontend, backend, database, and monitoring VPS. Firewall holes on 9100, 9187, 9121, and the stage ports are no longer needed.
 
-## Состав репозитория
+## Repository map
 
-| Путь | Зачем |
+| Path | Purpose |
 | --- | --- |
-| `docker-compose.yml` | Центральный стек |
-| `agent/` | Агент для deploy-сервера |
-| `victoriametrics/scrape.yml` | Только node_exporter Monitoring VPS |
-| `vmauth/config.yml` | Приём remote write |
-| `vmalert/rules/alerts.yml` | Общие алерты |
-| `packs/genario/` | Дашборды и алерты метрик Genario |
-| `grafana/` | Общие дашборды и provisioning |
-| `.github/workflows/deploy.yaml` | Деплой центрального стека в Dokploy по push в `main` |
+| `docker-compose.yml` | Central stack |
+| `agent/` | Agent for a deploy server |
+| `victoriametrics/scrape.yml` | node_exporter on the monitoring VPS only |
+| `vmauth/config.yml` | Remote-write ingress |
+| `vmalert/rules/alerts.yml` | Generic alerts |
+| `packs/genario/` | Genario metric dashboards and alerts |
+| `grafana/` | Shared dashboards and provisioning |
+| `.github/workflows/deploy.yaml` | Deploy the central stack to Dokploy on push to `main` |
 
-## Проверка конфига
+## Config check
 
 ```bash
 docker compose --env-file .env.example config
 docker compose --env-file agent/.env.example -f agent/docker-compose.yml config
 ```
 
-Контейнеры этой командой не запускаются.
+These commands do not start containers.

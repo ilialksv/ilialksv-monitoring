@@ -8,8 +8,8 @@ scrape_configs:
       - targets:
           - node-exporter:9100
 
-  # Контейнеры с меткой monitoring.scrape=true на dokploy-network.
-  # job, project и env берутся из меток контейнера, не из этого файла.
+  # Containers labeled monitoring.scrape=true on dokploy-network.
+  # job, project, and env come from container labels, not from this file.
   - job_name: docker
     scrape_interval: 15s
     docker_sd_configs:
