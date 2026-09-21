@@ -24,4 +24,4 @@ providers:
     disableDeletion: false
     editable: true
     options:
-      path: /etc/grafana/dashboards/genario
+      path: /etc/grafana/dashboards-genario

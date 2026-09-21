@@ -33,7 +33,9 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
-      - ./packs/genario/dashboards:/etc/grafana/dashboards/genario:ro
+      # Not nested under the shared dashboards mount: that parent is read-only,
+      # so Docker cannot create the mountpoint and the container fails to start.
+      - ./packs/genario/dashboards:/etc/grafana/dashboards-genario:ro
     networks:
       - monitoring
       - dokploy-network
