@@ -1,27 +1,21 @@
 ---
 name: validate-monitoring-change
-description: Selects safe validation for monitoring repository changes without mutating Docker or VPS state.
+description: Validate monitoring compose, agent compose, alert YAML, and dashboard JSON without starting containers.
 ---
 
-# Validate Monitoring Change
+# Validate A Monitoring Change
 
-## Matrix
+## Workflow
 
-- Compose/env: `docker compose --env-file .env.example config`.
-- Dashboard JSON: parse changed `.json` files.
-- YAML/template configs: parse with available tooling; otherwise inspect indentation and placeholders.
-- Alert rules: verify metric names, job names, `for:`, `summary`, and `description`.
-- Bootstrap scripts: static review and shell syntax checks when available.
-- Docs/AI rules only: formatting and stale-reference search.
+1. Read `AGENTS.md` and the files you changed.
+2. Run:
 
-## Do Not Run By Default
+```bash
+docker compose --env-file .env.example config
+docker compose --env-file agent/.env.example -f agent/docker-compose.yml config
+```
 
-- `docker compose up`
-- `docker compose down`
-- `docker compose pull`
-- `docker compose restart`
-- `docker compose exec`
-- Docker volume deletion
-- `scripts/bootstrap-*.sh`
-
-Report skipped runtime checks explicitly.
+3. Parse changed JSON and YAML.
+4. Check that application targets were not added to `victoriametrics/scrape.yml`.
+5. Check that Grafana, GlitchTip, and vmauth are the only services on `dokploy-network` in the central stack.
+6. Do not start containers or contact a VPS.

@@ -1,27 +1,17 @@
 ---
 name: update-bootstrap-script
-description: Updates root-level VPS bootstrap scripts with static safety checks and matching monitoring config changes.
+description: Add a Dokploy server to monitoring by deploying the agent. Host bootstrap scripts are gone.
 ---
 
-# Update Bootstrap Script
+# Add A Server
+
+Host exporter bootstrap scripts have been removed. Do not recreate `scripts/bootstrap-*.sh`.
 
 ## Workflow
 
-1. Inspect the closest existing bootstrap script in `scripts/**`.
-2. Preserve `set -euo pipefail`.
-3. Keep versions and ports configurable through env defaults.
-4. Keep user creation idempotent.
-5. Keep systemd unit writes deliberate and readable.
-6. Keep UFW rules scoped to `${MONITORING_VPS_IP}`.
-7. If adding an exporter, update:
-   - `.env.example`;
-   - `docker-compose.yml` if VictoriaMetrics needs new env;
-   - `victoriametrics/scrape.yml`;
-   - dashboards/alerts when useful;
-   - README manual/bootstrap/firewall/acceptance docs.
-8. Run shell syntax checks when available. Do not execute the script by default.
-
-## Safety
-
-- These scripts install packages, create users, write systemd units, and may change firewall rules.
-- Only run them when the user explicitly asks for that exact operation.
+1. Deploy `agent/docker-compose.yml` as its own Dokploy compose app on the target server.
+2. Set `SERVER_NAME`, `VMAGENT_REMOTE_WRITE_URL`, and the vmauth basic-auth pair from `agent/.env.example`.
+3. Keep the Docker socket mount read-only.
+4. Do not open ports 9100, 9187, or 9121 on the host.
+5. Do not deploy this agent on the monitoring VPS.
+6. Validate with `docker compose --env-file agent/.env.example -f agent/docker-compose.yml config`.

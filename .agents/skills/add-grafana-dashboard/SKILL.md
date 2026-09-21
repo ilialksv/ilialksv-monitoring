@@ -1,17 +1,15 @@
 ---
 name: add-grafana-dashboard
-description: Use when adding or updating Grafana dashboard JSON and provisioning.
+description: Add a Grafana dashboard to the shared folders or to a project pack.
 ---
 
-# Add Grafana Dashboard
+# Add A Dashboard
 
-1. Inspect existing dashboards in the target folder.
-2. Place JSON under `grafana/dashboards/backend`, `frontend`, `db`, or `monitoring`.
-3. Use stable unique dashboard `uid`.
-4. Use datasource UID `victoriametrics`.
-5. Keep PromQL aligned with current `job_name` and metric names.
-6. Update `grafana/provisioning/dashboards/dashboards.yml` if adding a folder.
-7. Update README acceptance checklist when the dashboard becomes part of expected operations.
-8. Parse changed JSON files before finishing.
+## Workflow
 
-Committed JSON is the source of truth, not uncommitted live Grafana edits.
+1. Shared host or datastore boards go under `grafana/dashboards/hosts` or `grafana/dashboards/datastores`.
+2. Product boards go under `packs/<project>/dashboards`.
+3. Use datasource UID `victoriametrics` and a stable unique `uid`.
+4. Host queries use `job="node"` and `server`. Datastore queries use `project` and `env`.
+5. A new folder needs an entry in `grafana/provisioning/dashboards/dashboards.yml` and a volume mount in `docker-compose.yml`.
+6. Parse the JSON before finishing. Dokploy must deploy the stack with `--force-recreate` or Grafana will keep the previous files.

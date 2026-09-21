@@ -1,21 +1,16 @@
 ---
 description: Grafana dashboard provisioning and dashboard JSON rules
-globs: "grafana/**/*.json"
+globs: "{grafana/**/*.json,grafana/**/*.yml,packs/**/dashboards/**/*.json}"
 alwaysApply: false
 ---
 
 # Monitoring Dashboards
 
-- Dashboard JSON is committed under `grafana/dashboards/<folder>/**`.
-- Folder provisioning is controlled by `grafana/provisioning/dashboards/dashboards.yml`.
-- Datasource provisioning is controlled by `grafana/provisioning/datasources/victoriametrics.yml`.
-- Use datasource UID `victoriametrics` for PromQL panels.
+- Shared JSON lives in `grafana/dashboards/hosts` and `grafana/dashboards/datastores`.
+- Product JSON lives in `packs/<project>/dashboards`.
+- Folder provisioning is `grafana/provisioning/dashboards/dashboards.yml`.
+- Use datasource UID `victoriametrics`.
 - Keep dashboard `uid` stable and unique.
-- Keep panel titles specific and operational.
-- Queries must match current scrape job names and metric names.
-- When adding a dashboard folder, update the provisioning file and README acceptance checklist.
-
-## Validation
-
-- Parse changed JSON files.
-- Search for stale job names or datasource UIDs.
+- Host panels filter `job="node"` and `server=~"$server"`.
+- Datastore panels filter `project` and `env`, not a per-VPS job name.
+- A new dashboard folder must be added to the provisioning file and mounted in `docker-compose.yml`.

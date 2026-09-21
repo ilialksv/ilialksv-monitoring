@@ -8,7 +8,7 @@ global:
 
 route:
   receiver: "default-notifications"
-  group_by: ["alertname", "job"]
+  group_by: ["alertname", "project", "env", "job", "server"]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h

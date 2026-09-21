@@ -1,0 +1,8 @@
+# vmauth подставляет %{ENV} при старте. Пароль не должен содержать кавычки.
+users:
+  - username: "%{VMAUTH_USERNAME}"
+    password: "%{VMAUTH_PASSWORD}"
+    url_map:
+      - src_paths:
+          - /api/v1/write
+        url_prefix: http://victoriametrics:8428

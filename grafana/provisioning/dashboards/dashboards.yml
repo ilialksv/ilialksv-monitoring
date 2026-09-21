@@ -1,35 +1,27 @@
 apiVersion: 1
 
 providers:
-  - name: backend
+  - name: hosts
     orgId: 1
-    folder: Backend
+    folder: Hosts
     type: file
     disableDeletion: false
     editable: true
     options:
-      path: /etc/grafana/dashboards/backend
-  - name: db
+      path: /etc/grafana/dashboards/hosts
+  - name: datastores
     orgId: 1
-    folder: DB
+    folder: Datastores
     type: file
     disableDeletion: false
     editable: true
     options:
-      path: /etc/grafana/dashboards/db
-  - name: frontend
+      path: /etc/grafana/dashboards/datastores
+  - name: genario
     orgId: 1
-    folder: Frontend
+    folder: Genario
     type: file
     disableDeletion: false
     editable: true
     options:
-      path: /etc/grafana/dashboards/frontend
-  - name: monitoring
-    orgId: 1
-    folder: Monitoring
-    type: file
-    disableDeletion: false
-    editable: true
-    options:
-      path: /etc/grafana/dashboards/monitoring
+      path: /etc/grafana/dashboards/genario

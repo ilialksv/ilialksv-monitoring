@@ -1,0 +1,44 @@
+# Один экземпляр на deploy-сервер Dokploy, не на monitoring VPS.
+# Compose path в Dokploy: agent/docker-compose.yml
+# Сокет Docker нужен для обнаружения контейнеров. Это доступ уровня root
+# на этом сервере: агент читает метки и IP, наружу порты экспортеров не открывает.
+
+services:
+  vmagent:
+    image: ${VMAGENT_IMAGE:?VMAGENT_IMAGE is required}
+    restart: unless-stopped
+    command:
+      - -promscrape.config=/etc/vmagent/scrape.yml
+      - -remoteWrite.url=${VMAGENT_REMOTE_WRITE_URL:?VMAGENT_REMOTE_WRITE_URL is required}
+      - -remoteWrite.basicAuth.username=${VMAGENT_REMOTE_WRITE_USERNAME:?VMAGENT_REMOTE_WRITE_USERNAME is required}
+      - -remoteWrite.basicAuth.password=${VMAGENT_REMOTE_WRITE_PASSWORD:?VMAGENT_REMOTE_WRITE_PASSWORD is required}
+      - -remoteWrite.label=server=${SERVER_NAME:?SERVER_NAME is required}
+    volumes:
+      - ./scrape.yml:/etc/vmagent/scrape.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - agent
+      - dokploy-network
+
+  node-exporter:
+    image: ${NODE_EXPORTER_IMAGE:?NODE_EXPORTER_IMAGE is required}
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+      - --web.listen-address=:9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - agent
+
+networks:
+  agent:
+    driver: bridge
+  dokploy-network:
+    external: true

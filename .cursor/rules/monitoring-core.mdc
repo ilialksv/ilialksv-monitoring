@@ -1,21 +1,21 @@
 ---
-description: Core rules for Genario monitoring infrastructure changes
+description: Core rules for ilialksv monitoring infrastructure changes
 alwaysApply: true
 ---
 
 # Monitoring Core
 
 - Treat `AGENTS.md` as the canonical project contract.
-- This repository manages production monitoring infrastructure, not application code.
-- Do not commit secrets, real `.env` values, SMTP credentials, GlitchTip secrets, or production tokens.
-- Do not run mutating Docker or VPS commands unless the user explicitly asks for that exact command in the current task.
-- Safe default validation is `docker compose --env-file .env.example config` plus local file syntax checks.
-- Keep job names stable. If a scrape `job_name` changes, update dashboards, alerts, and README together.
+- This repository is project-independent. Do not hardcode a product into the central scrape config.
+- Do not commit secrets or real `.env` values.
+- Do not run mutating Docker commands unless the user explicitly asks for that exact command.
+- Safe validation is `docker compose --env-file .env.example config` and `docker compose --env-file agent/.env.example -f agent/docker-compose.yml config`.
 - Keep Grafana datasource UID as `victoriametrics`.
-- Keep internal services internal: VictoriaMetrics, vmalert, Alertmanager, exporter ports, GlitchTip PostgreSQL, and GlitchTip Valkey should not be publicly published.
+- Public services are only Grafana, GlitchTip, and vmauth. Exporter ports stay unpublished.
+- New projects connect through Docker labels. New servers connect through the agent env.
 
 ## Required Finish Check
 
-- List changed monitoring surfaces: compose/env, scrape jobs, alert rules, dashboards, bootstrap scripts, docs.
-- State whether any public port, firewall, secret, or volume behavior changed.
-- State which validation commands were run and which runtime checks were intentionally not run.
+- List changed surfaces: central compose, agent, alerts, dashboards, packs, docs.
+- State whether any public port, secret, or volume behavior changed.
+- State which validation commands ran and which runtime checks were skipped.

@@ -1,24 +1,20 @@
 ---
 name: add-scrape-target
-description: Adds or changes a VictoriaMetrics scrape target with required env, dashboard, alert, and documentation updates.
+description: Connect a project or metrics endpoint to ilialksv-monitoring without editing the central scrape file.
 ---
 
-# Add Scrape Target
+# Connect A Project
 
 ## Workflow
 
-1. Inspect existing jobs in `victoriametrics/scrape.yml`.
-2. Pick a stable `job_name`; avoid renaming existing jobs unless requested.
-3. Add `.env.example` variables for any new host/domain/port.
-4. Pass those variables into `victoriametrics.environment` in `docker-compose.yml` if the scrape config uses them.
-5. Add the target to `victoriametrics/scrape.yml`.
-6. Update dashboards under `grafana/dashboards/**` when the new target needs visibility.
-7. Update `vmalert/rules/alerts.yml` when the new target needs alerts.
-8. Update README coverage, firewall, and acceptance checklists.
-9. Validate with `docker compose --env-file .env.example config`.
+1. Add Docker labels on the application container: `monitoring.scrape`, `monitoring.port`, `monitoring.job`, `monitoring.project`, `monitoring.env`.
+2. Do not add the target to `victoriametrics/scrape.yml`. The agent discovers it.
+3. Confirm an agent is already deployed on that server. If not, deploy `agent/docker-compose.yml` and set `SERVER_NAME` plus remote-write env.
+4. Add `packs/<project>/` only when the app exposes custom metric names. Mount new alert and dashboard paths in the central compose and Grafana provisioning.
+5. Update `README.md` only if the label contract or the runbook changes.
+6. Validate both compose files with the commands in `AGENTS.md`.
 
 ## Safety
 
-- Do not expose exporter ports publicly.
-- Do not run `docker compose up/down/pull/restart`.
-- Do not commit real target IPs unless they are intentional public examples.
+- Do not publish exporter ports.
+- Do not put product names into generic alerts.

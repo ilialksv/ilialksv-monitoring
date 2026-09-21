@@ -1,201 +1,115 @@
-# Genario — Monitoring
+# ilialksv-monitoring
 
-**The self-hosted observability stack that watches Genario in production.** It collects
-metrics from four servers and every application instance, stores and evaluates them,
-renders dashboards, delivers alerts when something breaks, and captures application errors
-— all running on infrastructure owned by the project, with no third-party SaaS involved.
+Общий мониторинг для проектов на Dokploy. Стек живёт на отдельной VPS и не знает заранее список приложений. Новый проект подключается метками контейнера. Новый сервер подключается отдельным деплоем агента и переменными окружения.
 
-Everything here is configuration as code: dashboards, alert rules, scrape targets and host
-provisioning all live in git and deploy the same way the applications do.
+Панель Dokploy одна: `dokploy.ilialksv.ru`. У каждого deploy-сервера свой Traefik, поэтому A-запись домена указывает на IP сервера, где крутится сервис, а не на IP панели.
 
-> **Companion repositories:** [backend](https://github.com/genario-ru/backend) ·
-> [web client](https://github.com/genario-ru/frontend)
+## Что где работает
 
----
+| Сервис | Где | Снаружи |
+| --- | --- | --- |
+| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, node_exporter этой VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427` |
+| vmagent + node_exporter | Каждый deploy-сервер с приложениями | Ничего. Метрики уходят на ingest |
+| Postgres и Redis приложений | Сервер приложения, сервисы Dokploy | Только внутри `dokploy-network` |
 
-## What it is built from
-
-| Component | Role |
-| --- | --- |
-| **VictoriaMetrics** | Scrapes every target and stores the time series; the single metrics backend |
-| **vmalert** | Evaluates alert rules against VictoriaMetrics and fires alerts |
-| **Alertmanager** | Groups, deduplicates and routes fired alerts to email |
-| **Grafana** | Renders dashboards, provisioned from files rather than clicked together in the UI |
-| **GlitchTip** | Self-hosted error tracking for the API, workers and web client, with its own PostgreSQL and Valkey |
-| **Exporters** | `node_exporter`, `postgres_exporter` and `redis_exporter` on the monitored hosts |
-| **Bootstrap scripts** | Idempotent shell scripts that install exporters, create system users, write systemd units and scope firewall rules |
-
-The whole stack is a Docker Compose deployment managed by Dokploy, deployed from `main`
-through GitHub Actions.
-
----
-
-## Architecture
+Агент на Monitoring VPS не ставится. Хост этой машины скрейпит сам VictoriaMetrics.
 
 ```mermaid
 flowchart LR
-  subgraph Monitored["Monitored infrastructure"]
-    BE["Backend VPS<br/>API /metrics + node_exporter"]
-    FE["Frontend VPS<br/>node_exporter"]
-    DB["DB VPS<br/>postgres_exporter + redis_exporter + node_exporter"]
-    MON["Monitoring VPS<br/>node_exporter"]
-  end
-
-  subgraph Stack["Monitoring stack"]
-    VM["VictoriaMetrics"]
-    VA["vmalert"]
-    AM["Alertmanager"]
-    GR["Grafana"]
-    GT["GlitchTip"]
-  end
-
-  BE -->|scrape| VM
-  FE -->|scrape| VM
-  DB -->|scrape| VM
-  MON -->|scrape| VM
-  VM --> VA
-  VA -->|fired alerts| AM
-  AM -->|email| Ops["On-call inbox"]
-  VM --> GR
-  Apps["API · workers · web client"] -->|errors| GT
-  GR -->|Dokploy domain, HTTPS| Web["Browser"]
-  GT -->|Dokploy domain, HTTPS| Web
+  Agent["vmagent на сервере приложения"] -->|"HTTPS basic auth"| Vmauth["ingest.ilialksv.ru"]
+  Vmauth --> VM["VictoriaMetrics"]
+  VM --> Grafana["grafana.ilialksv.ru"]
+  VM --> Vmalert["vmalert"]
+  Vmalert --> Alertmanager
+  Apps["API и клиент"] -->|ошибки| GlitchTip["glitchtip.ilialksv.ru"]
 ```
 
-Note the direction of every arrow into the stack: monitoring **pulls** from the
-infrastructure. Nothing on a monitored host needs credentials for the monitoring VPS, and
-losing the monitoring server cannot take production down with it.
+## Домены
 
----
+Их можно переименовать в Dokploy, если записи ниже не подходят. A-запись каждого имени смотрит на Monitoring VPS.
 
-## What is monitored
+- `grafana.ilialksv.ru` → Grafana, порт контейнера `3000`
+- `glitchtip.ilialksv.ru` → GlitchTip, порт `8000`
+- `ingest.ilialksv.ru` → vmauth, порт `8427`
 
-| Scrape job | Target | Interval |
-| --- | --- | --- |
-| `backend` | The API's `/metrics` over HTTPS, for **production and stage** separately | 15s |
-| `backend-node` | Host metrics of the backend VPS | 30s |
-| `frontend-node` | Host metrics of the frontend VPS | 30s |
-| `db-node` | Host metrics of the database VPS | 30s |
-| `monitoring-node` | Host metrics of the monitoring VPS itself | 30s |
-| `postgres` | PostgreSQL exporter, **production and stage** instances | 30s |
-| `redis` | Redis exporter, **production and stage** instances | 30s |
+`dokploy.ilialksv.ru` остаётся на VPS панели.
 
-Production and stage are separate targets on the same job, distinguished by labels rather
-than by duplicated configuration — which is why one dashboard can switch between
-environments instead of existing twice.
+## Как подключить проект
 
-Application-level metrics come from the backend itself: request rate, response classes,
-latency histograms and in-flight requests, all labelled by route and status class.
+На контейнере, который отдаёт `/metrics`, нужны метки. Пример уже стоит в compose бэкенда Genario.
 
----
+```yaml
+labels:
+  monitoring.scrape: "true"
+  monitoring.port: "3000"
+  monitoring.job: backend
+  monitoring.project: genario
+  monitoring.env: ${DEPLOY_ENVIRONMENT}
+```
 
-## Dashboards
+`monitoring.job` становится меткой `job` (`backend`, `postgres`, `redis` или своё имя). `monitoring.project` и `monitoring.env` режут дашборды и алерты. Порт — внутренний порт контейнера, не порт хоста.
 
-Eight dashboards are committed as JSON and provisioned into Grafana automatically, grouped
-into `Backend`, `Frontend`, `DB` and `Monitoring` folders:
+Центральный `victoriametrics/scrape.yml` при этом не меняется. Агент находит контейнер в `dokploy-network` и шлёт ряды на ingest.
 
-- **Backend Overview** — request rate, response classes, latency, in-flight requests,
-  process memory and CPU, uptime; switchable between production and stage.
-- **Backend / API Endpoints** — per-endpoint breakdown, same environment switch.
-- **Host Overview** (one per VPS) — CPU, memory, disk, load, network and uptime.
-- **Postgres Overview** — exporter and database health, connections, transaction rate,
-  database size, deadlocks, checkpoint pressure.
-- **Redis Overview** — exporter and Redis health, memory usage, clients, ops/sec,
-  evictions, rejected connections, persistence health.
+Ошибки заводятся в UI GlitchTip: новый проект, DSN в env приложения. Для frontend Genario DSN вшивается в бандл на сборке (`VITE_GLITCHTIP_DSN`), поэтому смена домена GlitchTip требует нового билда, не только рестарта. У бэкенда `GLITCHTIP_DSN` читается при старте процесса.
 
-Because dashboards live in git with stable UIDs, a dashboard change is reviewed in a pull
-request and cannot be lost when a container is recreated.
+Свои графики по нестандартным именам метрик кладутся паком. Папка `packs/genario/` — дашборды и алерты для `genario_http_*`. Postgres, Redis, хост и `up` работают без пака.
 
----
+## Как подключить сервер
 
-## Alerting
+В Dokploy, на нужном deploy-сервере, отдельное Compose-приложение из этого репозитория:
 
-Fourteen baseline rules are evaluated by vmalert and routed to email by Alertmanager.
-Every rule carries a `for:` duration, so a transient blip does not page anyone.
+- Compose path: `agent/docker-compose.yml`
+- Env из `agent/.env.example`
+- `SERVER_NAME` уникален среди серверов, одно слово, например `genario`
+- `VMAGENT_REMOTE_WRITE_URL=https://ingest.ilialksv.ru/api/v1/write`
+- логин и пароль те же, что `VMAUTH_USERNAME` и `VMAUTH_PASSWORD` центрального стека
 
-| Category | Rules |
+Автодеплой агента включается у этого приложения в Dokploy. GitHub Action в корне деплоит только центральный стек: у него один `DOKPLOY_APPLICATION_ID`.
+
+Сокет Docker у агента только на чтение, но это всё равно доступ уровня root на этом сервере. Порты 9100, 9187 и 9121 наружу не публикуются.
+
+`/metrics` бэкенда дополнительно закрыт `METRICS_ALLOWED_IPS`. Туда пишется подсеть `dokploy-network` (`docker network inspect dokploy-network`). Пустой список запрещает всех. Агент ходит в контейнер напрямую, не через Traefik.
+
+Для postgres-exporter в env приложения задаётся `POSTGRES_EXPORTER_DATA_SOURCE_NAME`, отдельно от `POSTGRES_URL`. Если в URL ещё нет query string, добавь `?sslmode=disable`. Если `?` уже есть, добавь `&sslmode=disable`. Дописывать суффикс к `POSTGRES_URL` нельзя: второй `?` ломает строку.
+
+## Runbook переноса Genario
+
+Код этого репозитория и панель готовятся до переключения DNS. Содержимое PostgreSQL переносишь ты. Redis поднимается пустым. История метрик и GlitchTip не переносится.
+
+1. Запушь этот репозиторий в `ilialksv/ilialksv-monitoring`. В Dokploy заведи два deploy-сервера, если их ещё нет: Genario и Monitoring. Панель на них не переезжает.
+2. На Monitoring VPS задеплой корневой `docker-compose.yml`. В команде Compose укажи `--force-recreate`, иначе Grafana не подхватит новый JSON с bind mount. Пропиши env из `.env.example`, домены Grafana, GlitchTip и ingest. В GlitchTip заведи проекты API, workers и web. Prod и stage — окружения внутри проекта, не второй инстанс.
+3. На Genario VPS создай два Postgres и два Redis в Dokploy. Восстанови дампы PostgreSQL до первого деплоя бэкенда. В дампе уже есть таблица миграций Drizzle, повторный migrate будет пустым. Если migrate успеет создать пустую схему раньше дампа, восстановление придётся разбирать вручную.
+4. На этом же сервере создай приложения: backend compose для production и для stage, frontend application для production и для stage. Домены с префиксом `stage.` оставь теми же. В env бэкенда пропиши новые `POSTGRES_URL`, `REDIS_URL`, `POSTGRES_EXPORTER_DATA_SOURCE_NAME`, `METRICS_ALLOWED_IPS` и новый `GLITCHTIP_DSN`.
+5. Задеплой агент на Genario VPS. `SERVER_NAME=genario`.
+6. Обнови секреты GitHub Environment `production` и `stage`: `DOKPLOY_APPLICATION_ID` новых приложений, `DOKPLOY_URL` по-прежнему `https://dokploy.ilialksv.ru`, секреты GlitchTip и `VITE_GLITCHTIP_DSN`. Запушь frontend, чтобы бандл собрался с новым DSN. Workflow бэкенда и frontend не менялись.
+7. Переключи A-записи. Сначала домены `stage.`, потом production. Домены Genario смотрят на IP Genario VPS. Домены мониторинга смотрят на IP Monitoring VPS.
+8. Проверь stage, потом production:
+   - сайт и API открываются по старым именам;
+   - в Grafana, папка Hosts, есть сервер `genario` и сервер `monitoring`;
+   - в Datastores есть `project="genario"` для postgres и redis, оба env;
+   - в папке Genario запросы backend есть и для production, и для stage;
+   - тестовая ошибка клиента и API падает в новый GlitchTip.
+9. Выключи старые VPS frontend, backend, баз и старого мониторинга. Дырки в файрволе на 9100, 9187, 9121 и stage-портах больше не нужны.
+
+## Состав репозитория
+
+| Путь | Зачем |
 | --- | --- |
-| **Availability** | `BackendDown`, `BackendNodeDown`, `FrontendNodeDown`, `DbNodeDown`, `MonitoringNodeDown`, `PostgresDown`, `RedisDown` |
-| **Application health** | `BackendHigh5xxRate` (5xx rate above threshold for 10 min), `BackendHighLatencyP95` (p95 above one second for 10 min) |
-| **Host capacity** | `HostHighCpu`, `HostLowMemory`, `HostDiskAlmostFull` |
-| **Datastore pressure** | `PostgresTooManyConnections`, `RedisHighMemoryUsage` |
+| `docker-compose.yml` | Центральный стек |
+| `agent/` | Агент для deploy-сервера |
+| `victoriametrics/scrape.yml` | Только node_exporter Monitoring VPS |
+| `vmauth/config.yml` | Приём remote write |
+| `vmalert/rules/alerts.yml` | Общие алерты |
+| `packs/genario/` | Дашборды и алерты метрик Genario |
+| `grafana/` | Общие дашборды и provisioning |
+| `.github/workflows/deploy.yaml` | Деплой центрального стека в Dokploy по push в `main` |
 
-The split of responsibilities is deliberate: **vmalert** decides *whether* something is
-wrong, **Alertmanager** decides *who hears about it and how often*. Thresholds are
-documented as starting defaults to be revised against real production behaviour rather
-than treated as settled truth.
+## Проверка конфига
 
----
+```bash
+docker compose --env-file .env.example config
+docker compose --env-file agent/.env.example -f agent/docker-compose.yml config
+```
 
-## Error tracking
-
-GlitchTip runs alongside the metrics stack as a self-hosted, Sentry-compatible error
-tracker, backed by its own PostgreSQL and Valkey containers. The API, the workers and the
-web client all report to it with release tagging, so a production stack trace can be traced
-back to the commit that introduced it. Metrics answer *is something wrong*; GlitchTip
-answers *what exactly broke, for whom, and since which release*.
-
----
-
-## Host provisioning
-
-Four bootstrap scripts turn a bare VPS into a monitored one: they install the right
-exporters, create dedicated unprivileged system users, write systemd units, start the
-services, and — when given the monitoring host's address — add firewall rules that expose
-exporter ports to that address only.
-
-They are written to be re-runnable: users are created only when missing, units are
-rewritten deliberately, and each script ends by printing the next verification step. Adding
-a server is a repeatable operation rather than a remembered sequence of SSH commands.
-
----
-
-## Security and network posture
-
-- **Only two services are reachable from the internet** — Grafana and GlitchTip, published
-  over HTTPS through Dokploy domains. VictoriaMetrics, vmalert, Alertmanager and
-  GlitchTip's PostgreSQL and Valkey stay on an internal Docker network with no published
-  ports.
-- **Exporters are firewalled to the monitoring host.** Ports 9100, 9187, 9121 and their
-  stage counterparts accept traffic from the monitoring VPS address only.
-- **The backend's `/metrics` endpoint is IP-allowlisted** in the application itself, so
-  even though it lives on the public API domain, only the monitoring host can read it.
-- **No credentials in git.** Alertmanager's configuration is committed as a template with
-  placeholders and rendered from environment variables at container start; only
-  `.env.example` with placeholder values is tracked.
-- **The monitoring stack has no write access to production.** It scrapes read-only
-  endpoints and connects to databases through a dedicated `pg_monitor` role that can read
-  statistics and nothing else.
-
----
-
-## Current scope
-
-The stack covers infrastructure health, API performance and application errors. Worker
-queue metrics, log aggregation, distributed tracing and a high-availability configuration
-of VictoriaMetrics are deliberately out of scope at this stage — a single-node deployment
-with one-month retention matches the traffic this product actually serves, and the
-boundary is documented rather than discovered during an incident.
-
----
-
-## Repository map
-
-| Path | Contents |
-| --- | --- |
-| `docker-compose.yml` | The full stack: Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip and its dependencies |
-| `victoriametrics/scrape.yml` | Scrape jobs and target templates |
-| `vmalert/rules/alerts.yml` | Alert rules |
-| `alertmanager/alertmanager.yml.tpl` | Routing and delivery template, rendered at startup |
-| `grafana/dashboards/` | Committed dashboard JSON, grouped by folder |
-| `grafana/provisioning/` | Datasource and dashboard provisioning |
-| `scripts/` | Bootstrap scripts for the backend, frontend, database and monitoring hosts |
-| `.github/workflows/` | Deployment pipeline |
-| `AGENTS.md`, `CLAUDE.md`, `.cursor/`, `.agents/` | Working agreements and repeatable workflows for AI coding tools |
-
----
-
-## License
-
-Source-available for review only. See [LICENSE](LICENSE) — no permission is granted to
-use, copy, modify or distribute this configuration.
+Контейнеры этой командой не запускаются.

@@ -1,26 +1,17 @@
 ---
-description: VictoriaMetrics scrape target and vmalert rule conventions
-globs: "{victoriametrics/**/*.yml,vmalert/**/*.yml,alertmanager/**/*.yml.tpl}"
+description: Scrape, remote write, and vmalert rule conventions
+globs: "{victoriametrics/**/*.yml,agent/scrape.yml,vmalert/**/*.yml,packs/**/*.yml,alertmanager/**/*.yml.tpl}"
 alwaysApply: false
 ---
 
 # Monitoring Scrape And Alerts
 
-- Scrape jobs live in `victoriametrics/scrape.yml`.
-- Alert rules live in `vmalert/rules/alerts.yml`.
-- Alertmanager only routes already-fired alerts; it does not evaluate PromQL.
-- New scrape targets usually require `.env.example`, `docker-compose.yml`, dashboards, alerts, firewall docs, and acceptance checklist updates.
-- Alert expressions must use current job names and metric names.
-- Add `for:` to reduce noise unless the alert is intentionally immediate.
-- Alerts should include `summary` and `description` annotations.
-- Use template placeholders in `alertmanager/alertmanager.yml.tpl`; do not commit real SMTP values.
-
-## Current Stable Jobs
-
-- `backend`
-- `backend-node`
-- `frontend-node`
-- `monitoring-node`
-- `db-node`
-- `postgres`
-- `redis`
+- `victoriametrics/scrape.yml` scrapes only the monitoring host node_exporter.
+- Application targets are discovered in `agent/scrape.yml` from Docker labels.
+- Generic alerts live in `vmalert/rules/alerts.yml`.
+- Product alerts live in `packs/<project>/alerts.yml` and must filter on `project`.
+- Alertmanager only routes fired alerts.
+- Use labels `project`, `env`, `job`, and `server`. Do not add a global `environment: production` label.
+- Host queries must group by `server`, not by `instance`: every agent scrapes `node-exporter:9100`.
+- Add `for:`, `summary`, and `description`.
+- Keep SMTP values as template placeholders.

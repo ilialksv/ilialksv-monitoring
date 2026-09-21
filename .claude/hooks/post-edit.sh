@@ -20,25 +20,22 @@ print(file_path)
 
 case "$FILE" in
   */docker-compose.yml|*/.env.example)
-    echo "[hook] Compose/env changed: run docker compose --env-file .env.example config; do not start containers by default."
+    echo "[hook] Compose/env changed: run both compose config commands from AGENTS.md; do not start containers by default."
     ;;
-  */victoriametrics/scrape.yml)
-    echo "[hook] Scrape config changed: verify env variables, dashboards, alerts, firewall docs, and acceptance checklist."
+  */victoriametrics/scrape.yml|*/agent/scrape.yml)
+    echo "[hook] Scrape config changed: application targets belong in the agent via Docker labels, not in the central scrape file."
     ;;
-  */vmalert/rules/*.yml)
-    echo "[hook] Alert rules changed: verify job names, metric names, for duration, summary, and description."
+  */vmalert/rules/*.yml|*/packs/*/alerts.yml)
+    echo "[hook] Alert rules changed: generic rules stay product-free; pack rules must filter project."
     ;;
-  */alertmanager/*.yml.tpl)
-    echo "[hook] Alertmanager template changed: keep secrets as placeholders and validate rendered config assumptions."
+  */alertmanager/*.yml.tpl|*/vmauth/*.yml)
+    echo "[hook] Routing or auth config changed: keep secrets as placeholders."
     ;;
-  */grafana/dashboards/*.json|*/grafana/dashboards/*/*.json)
-    echo "[hook] Dashboard changed: parse JSON and verify datasource UID victoriametrics plus current job names."
+  */grafana/dashboards/*.json|*/grafana/dashboards/*/*.json|*/packs/*/dashboards/*.json)
+    echo "[hook] Dashboard changed: parse JSON and verify datasource UID victoriametrics."
     ;;
   */grafana/provisioning/*.yml|*/grafana/provisioning/*/*.yml)
     echo "[hook] Grafana provisioning changed: verify mounted paths and dashboard folders."
-    ;;
-  */scripts/*.sh)
-    echo "[hook] Bootstrap script changed: do not execute by default; verify set -euo pipefail, systemd, and firewall scope."
     ;;
 esac
 

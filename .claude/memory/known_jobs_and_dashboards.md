@@ -1,24 +1,22 @@
 ---
 name: Known jobs and dashboards
-description: Stable scrape jobs and dashboard folders in genario-monitoring
+description: Label contract, jobs, and dashboard folders
 type: project
 ---
 
-## Scrape Jobs
+## Jobs
 
-- `backend`
-- `backend-node`
-- `frontend-node`
-- `monitoring-node`
-- `db-node`
-- `postgres`
-- `redis`
+- `node` — host metrics. One series set per `server`.
+- Any `monitoring.job` value from a container label. Genario uses `backend`, `postgres`, and `redis`.
 
-## Dashboard Folders
+There are no `backend-node`, `frontend-node`, `db-node`, or `monitoring-node` jobs.
 
-- `grafana/dashboards/backend`
-- `grafana/dashboards/frontend`
-- `grafana/dashboards/db`
-- `grafana/dashboards/monitoring`
+## Labels
 
-Grafana datasource UID is `victoriametrics`.
+`project`, `env`, `job`, `server`.
+
+## Dashboards
+
+- `grafana/dashboards/hosts` — Host Overview, uid `host-overview`
+- `grafana/dashboards/datastores` — Postgres and Redis
+- `packs/genario/dashboards` — Backend Overview and API Endpoints

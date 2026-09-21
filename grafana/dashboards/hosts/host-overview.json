@@ -67,8 +67,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job=\"db-node\",mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "{{instance}}",
+          "expr": "100 - (avg by (server) (rate(node_cpu_seconds_total{job=\"node\",server=~\"$server\",mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -121,8 +121,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"db-node\"} / node_memory_MemTotal_bytes{job=\"db-node\"}))",
-          "legendFormat": "{{instance}}",
+          "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"node\",server=~\"$server\"} / node_memory_MemTotal_bytes{job=\"node\",server=~\"$server\"}))",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -175,8 +175,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "100 * (1 - (node_filesystem_avail_bytes{job=\"db-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{job=\"db-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}))",
-          "legendFormat": "{{instance}}",
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{job=\"node\",server=~\"$server\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{job=\"node\",server=~\"$server\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}))",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -228,8 +228,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "node_load1{job=\"db-node\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "node_load1{job=\"node\",server=~\"$server\"}",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -281,8 +281,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum by (instance) (rate(node_network_receive_bytes_total{job=\"db-node\",device!~\"lo|veth.*|docker.*\"}[5m]))",
-          "legendFormat": "{{instance}}",
+          "expr": "sum by (server) (rate(node_network_receive_bytes_total{job=\"node\",server=~\"$server\",device!~\"lo|veth.*|docker.*\"}[5m]))",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -339,8 +339,8 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "time() - node_boot_time_seconds{job=\"db-node\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "time() - node_boot_time_seconds{job=\"node\",server=~\"$server\"}",
+          "legendFormat": "{{server}}",
           "refId": "A"
         }
       ],
@@ -352,11 +352,36 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "monitoring",
     "hosts"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "victoriametrics"
+        },
+        "definition": "label_values(node_cpu_seconds_total{job=\"node\"}, server)",
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Server",
+        "multi": false,
+        "name": "server",
+        "options": [],
+        "query": {
+          "query": "label_values(node_cpu_seconds_total{job=\"node\"}, server)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -365,7 +390,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "Host Overview",
-  "uid": "db-host-overview",
+  "uid": "host-overview",
   "version": 1,
   "weekStart": ""
 }

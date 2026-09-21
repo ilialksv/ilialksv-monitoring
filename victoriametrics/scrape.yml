@@ -1,74 +1,15 @@
 global:
   scrape_interval: 30s
   external_labels:
-    environment: production
-    stack: genario-monitoring
+    stack: ilialksv-monitoring
 
 scrape_configs:
-  - job_name: backend
-    scrape_interval: 15s
-    scheme: https
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{BACKEND_PRODUCTION_DOMAIN}"
-        labels:
-          backend_environment: production
-      - targets:
-          - "%{BACKEND_STAGE_DOMAIN}"
-        labels:
-          backend_environment: stage
-
-  - job_name: backend-node
+  # Только хост самой monitoring VPS. Метрики приложений приходят
+  # remote write-ом от vmagent на других серверах.
+  - job_name: node
     scrape_interval: 30s
-    metrics_path: /metrics
     static_configs:
       - targets:
-          - "%{BACKEND_PRODUCTION_DOMAIN}:9100"
-
-  - job_name: frontend-node
-    scrape_interval: 30s
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{FRONTEND_PRODUCTION_DOMAIN}:9100"
-
-  - job_name: monitoring-node
-    scrape_interval: 30s
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{MONITORING_IP}:9100"
-
-  - job_name: db-node
-    scrape_interval: 30s
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{DB_IP}:9100"
-
-  - job_name: postgres
-    scrape_interval: 30s
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{DB_IP}:%{POSTGRES_EXPORTER_PORT}"
+          - node-exporter:9100
         labels:
-          db_environment: production
-      - targets:
-          - "%{DB_IP}:%{POSTGRES_STAGE_EXPORTER_PORT}"
-        labels:
-          db_environment: stage
-
-  - job_name: redis
-    scrape_interval: 30s
-    metrics_path: /metrics
-    static_configs:
-      - targets:
-          - "%{DB_IP}:%{REDIS_EXPORTER_PORT}"
-        labels:
-          db_environment: production
-      - targets:
-          - "%{DB_IP}:%{REDIS_STAGE_EXPORTER_PORT}"
-        labels:
-          db_environment: stage
+          server: "%{SERVER_NAME}"

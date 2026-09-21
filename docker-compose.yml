@@ -1,3 +1,9 @@
+# Dokploy подставляет переменные из Environment приложения.
+# В команде Compose в Dokploy укажи --force-recreate, иначе Grafana не
+# перечитает JSON дашбордов с bind mount.
+# Публичны только grafana (3000), glitchtip (8000) и vmauth (8427).
+# Остальные сервисы остаются в сети monitoring.
+
 x-glitchtip-environment: &glitchtip-environment
   DATABASE_URL: postgres://${GLITCHTIP_POSTGRES_USER}:${GLITCHTIP_POSTGRES_PASSWORD}@glitchtip-postgres:5432/${GLITCHTIP_POSTGRES_DB}
   VALKEY_URL: redis://:${GLITCHTIP_VALKEY_PASSWORD}@glitchtip-valkey:6379/0
@@ -27,22 +33,16 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - ./packs/genario/dashboards:/etc/grafana/dashboards/genario:ro
     networks:
       - monitoring
+      - dokploy-network
 
   victoriametrics:
     image: ${VICTORIAMETRICS_IMAGE}
     restart: unless-stopped
     environment:
-      BACKEND_PRODUCTION_DOMAIN: ${BACKEND_PRODUCTION_DOMAIN}
-      BACKEND_STAGE_DOMAIN: ${BACKEND_STAGE_DOMAIN}
-      FRONTEND_PRODUCTION_DOMAIN: ${FRONTEND_PRODUCTION_DOMAIN}
-      MONITORING_IP: ${MONITORING_IP}
-      DB_IP: ${DB_IP}
-      POSTGRES_EXPORTER_PORT: ${POSTGRES_EXPORTER_PORT}
-      REDIS_EXPORTER_PORT: ${REDIS_EXPORTER_PORT}
-      POSTGRES_STAGE_EXPORTER_PORT: ${POSTGRES_STAGE_EXPORTER_PORT}
-      REDIS_STAGE_EXPORTER_PORT: ${REDIS_STAGE_EXPORTER_PORT}
+      SERVER_NAME: ${SERVER_NAME:?SERVER_NAME is required}
     command:
       - -storageDataPath=/victoria-metrics-data
       - -retentionPeriod=${VICTORIAMETRICS_RETENTION_MONTHS}
@@ -54,17 +54,36 @@ services:
     networks:
       - monitoring
 
+  vmauth:
+    image: ${VMAUTH_IMAGE}
+    restart: unless-stopped
+    environment:
+      VMAUTH_USERNAME: ${VMAUTH_USERNAME:?VMAUTH_USERNAME is required}
+      VMAUTH_PASSWORD: ${VMAUTH_PASSWORD:?VMAUTH_PASSWORD is required}
+    command:
+      - -auth.config=/etc/vmauth/config.yml
+      - -httpListenAddr=:8427
+    expose:
+      - "8427"
+    volumes:
+      - ./vmauth/config.yml:/etc/vmauth/config.yml:ro
+    networks:
+      - monitoring
+      - dokploy-network
+
   vmalert:
     image: ${VMALERT_IMAGE}
     restart: unless-stopped
     command:
       - -rule=/etc/vmalert/rules/*.yml
+      - -rule=/etc/vmalert/packs/genario/alerts.yml
       - -datasource.url=http://victoriametrics:8428
       - -notifier.url=http://alertmanager:9093
       - -httpListenAddr=:8880
       - -datasource.queryStep=30s
     volumes:
       - ./vmalert/rules:/etc/vmalert/rules:ro
+      - ./packs/genario:/etc/vmalert/packs/genario:ro
     networks:
       - monitoring
 
@@ -95,6 +114,23 @@ services:
     volumes:
       - alertmanager_data:/alertmanager
       - ./alertmanager/alertmanager.yml.tpl:/etc/alertmanager/alertmanager.yml.tpl:ro
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: ${NODE_EXPORTER_IMAGE}
+    restart: unless-stopped
+    pid: host
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+      - --web.listen-address=:9100
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
     networks:
       - monitoring
 
@@ -155,10 +191,13 @@ services:
       - glitchtip_uploads:/code/uploads
     networks:
       - monitoring
+      - dokploy-network
 
 networks:
   monitoring:
     driver: bridge
+  dokploy-network:
+    external: true
 
 volumes:
   grafana_data:

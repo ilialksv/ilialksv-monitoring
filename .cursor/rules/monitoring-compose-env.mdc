@@ -1,20 +1,20 @@
 ---
-description: Docker Compose and environment variable rules for the monitoring stack
-globs: "{docker-compose.yml,.env.example}"
+description: Docker Compose and environment variable rules for the monitoring stack and agent
+globs: "{docker-compose.yml,agent/docker-compose.yml,.env.example,agent/.env.example,vmauth/**/*.yml}"
 alwaysApply: false
 ---
 
 # Monitoring Compose And Env
 
-- Add new runtime variables to `.env.example`.
-- Pass new variables into a service in `docker-compose.yml` only when that container needs them.
-- Keep GlitchTip PostgreSQL and Valkey internal-only on the `monitoring` network.
-- Keep Grafana and GlitchTip exposed through `expose`, not host `ports`; Dokploy owns public ingress.
-- Keep VictoriaMetrics, vmalert, and Alertmanager off the public internet.
-- Preserve named volumes unless the task explicitly changes data persistence.
-- Do not change image tags casually. If an image changes, mention upgrade risk and expected compatibility.
+- Add new runtime variables to the `.env.example` of the compose file that uses them.
+- Pass a variable into a service only when that container needs it.
+- Keep GlitchTip PostgreSQL and Valkey internal on the `monitoring` network.
+- Grafana, GlitchTip, and vmauth join `dokploy-network` and use `expose`, not host `ports`.
+- Do not deploy `agent/docker-compose.yml` on the monitoring VPS.
+- Do not change image tags casually.
+- vmauth passwords must not contain quotes or YAML-significant characters. The config substitutes `%{ENV}` before YAML parse.
 
 ## Validation
 
-- Run `docker compose --env-file .env.example config`.
+- Run both compose config commands from `AGENTS.md`.
 - Do not run `docker compose up/down/pull/restart/exec` unless explicitly requested.

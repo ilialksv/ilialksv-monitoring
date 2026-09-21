@@ -66,7 +66,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum(rate(genario_http_requests_total{job=\"backend\",backend_environment=~\"$environment\"}[5m]))",
+          "expr": "sum(rate(genario_http_requests_total{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m]))",
           "legendFormat": "requests",
           "refId": "A"
         }
@@ -119,7 +119,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum by (status_class) (rate(genario_http_requests_total{job=\"backend\",backend_environment=~\"$environment\"}[5m]))",
+          "expr": "sum by (status_class) (rate(genario_http_requests_total{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m]))",
           "legendFormat": "{{status_class}}",
           "refId": "A"
         }
@@ -172,7 +172,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",backend_environment=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -181,7 +181,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",backend_environment=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -190,7 +190,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",backend_environment=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(genario_http_request_duration_seconds_bucket{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -243,7 +243,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum(genario_http_requests_in_flight{job=\"backend\",backend_environment=~\"$environment\"})",
+          "expr": "sum(genario_http_requests_in_flight{job=\"backend\",project=\"genario\",env=~\"$environment\"})",
           "legendFormat": "in-flight",
           "refId": "A"
         }
@@ -296,7 +296,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genario_process_resident_memory_bytes{job=\"backend\",backend_environment=~\"$environment\"}",
+          "expr": "genario_process_resident_memory_bytes{job=\"backend\",project=\"genario\",env=~\"$environment\"}",
           "legendFormat": "rss",
           "refId": "A"
         }
@@ -349,7 +349,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genario_nodejs_heap_size_used_bytes{job=\"backend\",backend_environment=~\"$environment\"}",
+          "expr": "genario_nodejs_heap_size_used_bytes{job=\"backend\",project=\"genario\",env=~\"$environment\"}",
           "legendFormat": "heap used",
           "refId": "A"
         }
@@ -402,7 +402,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "rate(genario_process_cpu_seconds_total{job=\"backend\",backend_environment=~\"$environment\"}[5m])",
+          "expr": "rate(genario_process_cpu_seconds_total{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m])",
           "legendFormat": "cpu seconds/sec",
           "refId": "A"
         }
@@ -455,7 +455,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genario_nodejs_eventloop_lag_p50_seconds{job=\"backend\",backend_environment=~\"$environment\"}",
+          "expr": "genario_nodejs_eventloop_lag_p50_seconds{job=\"backend\",project=\"genario\",env=~\"$environment\"}",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -464,7 +464,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genario_nodejs_eventloop_lag_p99_seconds{job=\"backend\",backend_environment=~\"$environment\"}",
+          "expr": "genario_nodejs_eventloop_lag_p99_seconds{job=\"backend\",project=\"genario\",env=~\"$environment\"}",
           "legendFormat": "p99",
           "refId": "B"
         },
@@ -473,7 +473,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genario_nodejs_eventloop_lag_max_seconds{job=\"backend\",backend_environment=~\"$environment\"}",
+          "expr": "genario_nodejs_eventloop_lag_max_seconds{job=\"backend\",project=\"genario\",env=~\"$environment\"}",
           "legendFormat": "max",
           "refId": "C"
         }
@@ -526,7 +526,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "rate(genario_nodejs_gc_duration_seconds_sum{job=\"backend\",backend_environment=~\"$environment\"}[5m]) / rate(genario_nodejs_gc_duration_seconds_count{job=\"backend\",backend_environment=~\"$environment\"}[5m])",
+          "expr": "rate(genario_nodejs_gc_duration_seconds_sum{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m]) / rate(genario_nodejs_gc_duration_seconds_count{job=\"backend\",project=\"genario\",env=~\"$environment\"}[5m])",
           "legendFormat": "{{kind}} avg",
           "refId": "A"
         }
@@ -604,7 +604,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "min(up{job=\"backend\",backend_environment=~\"$environment\"})",
+          "expr": "min(up{job=\"backend\",project=\"genario\",env=~\"$environment\"})",
           "legendFormat": "scrape health",
           "refId": "A"
         }
@@ -662,7 +662,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "min(time() - genario_process_start_time_seconds{job=\"backend\",backend_environment=~\"$environment\"})",
+          "expr": "min(time() - genario_process_start_time_seconds{job=\"backend\",project=\"genario\",env=~\"$environment\"})",
           "legendFormat": "uptime",
           "refId": "A"
         }
@@ -690,14 +690,14 @@
           "type": "prometheus",
           "uid": "victoriametrics"
         },
-        "definition": "label_values(genario_http_requests_total{job=\"backend\"}, backend_environment)",
+        "definition": "label_values(genario_http_requests_total{job=\"backend\",project=\"genario\"}, env)",
         "includeAll": true,
         "label": "Environment",
         "multi": false,
         "name": "environment",
         "options": [],
         "query": {
-          "query": "label_values(genario_http_requests_total{job=\"backend\"}, backend_environment)",
+          "query": "label_values(genario_http_requests_total{job=\"backend\",project=\"genario\"}, env)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,

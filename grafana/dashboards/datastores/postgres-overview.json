@@ -87,7 +87,7 @@
       },
       "targets": [
         {
-          "expr": "min(up{job=\"redis\",db_environment=~\"$environment\"})",
+          "expr": "min(up{job=\"postgres\",project=~\"$project\",env=~\"$environment\"})",
           "legendFormat": "scrape",
           "refId": "A"
         }
@@ -111,12 +111,12 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "REDIS DOWN"
+                  "text": "DB DOWN"
                 },
                 "1": {
                   "color": "green",
                   "index": 1,
-                  "text": "REDIS UP"
+                  "text": "DB UP"
                 }
               },
               "type": "value"
@@ -161,13 +161,111 @@
       },
       "targets": [
         {
-          "expr": "min(redis_up{job=\"redis\",db_environment=~\"$environment\"})",
-          "legendFormat": "redis_up",
+          "expr": "min(pg_up{job=\"postgres\",project=~\"$project\",env=~\"$environment\"})",
+          "legendFormat": "pg_up",
           "refId": "A"
         }
       ],
-      "title": "Redis Health",
+      "title": "Database Health",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (instance) (pg_stat_activity_count{job=\"postgres\",project=~\"$project\",env=~\"$environment\"})",
+          "legendFormat": "{{project}} {{env}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "victoriametrics"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0,
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(pg_stat_database_xact_commit{job=\"postgres\",project=~\"$project\",env=~\"$environment\"}[5m]) + rate(pg_stat_database_xact_rollback{job=\"postgres\",project=~\"$project\",env=~\"$environment\"}[5m]))",
+          "legendFormat": "{{project}} {{env}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Transactions per Second",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -196,9 +294,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 8
       },
-      "id": 3,
+      "id": 5,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -210,12 +308,12 @@
       },
       "targets": [
         {
-          "expr": "redis_memory_used_bytes{job=\"redis\",db_environment=~\"$environment\"}",
-          "legendFormat": "{{instance}}",
+          "expr": "sum by (instance) (pg_database_size_bytes{job=\"postgres\",project=~\"$project\",env=~\"$environment\"})",
+          "legendFormat": "{{project}} {{env}}",
           "refId": "A"
         }
       ],
-      "title": "Memory Used",
+      "title": "Database Size",
       "type": "timeseries"
     },
     {
@@ -245,104 +343,6 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "redis_connected_clients{job=\"redis\",db_environment=~\"$environment\"}",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Connected Clients",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "victoriametrics"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "min": 0,
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "rate(redis_commands_processed_total{job=\"redis\",db_environment=~\"$environment\"}[5m])",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Ops per Second",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "victoriametrics"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "min": 0,
-          "unit": "ops"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
         "y": 16
       },
       "id": 6,
@@ -357,12 +357,12 @@
       },
       "targets": [
         {
-          "expr": "rate(redis_evicted_keys_total{job=\"redis\",db_environment=~\"$environment\"}[5m])",
-          "legendFormat": "{{instance}}",
+          "expr": "sum by (instance) (rate(pg_stat_database_deadlocks{job=\"postgres\",project=~\"$project\",env=~\"$environment\"}[5m]))",
+          "legendFormat": "{{project}} {{env}}",
           "refId": "A"
         }
       ],
-      "title": "Evictions",
+      "title": "Deadlocks",
       "type": "timeseries"
     },
     {
@@ -406,66 +406,12 @@
       },
       "targets": [
         {
-          "expr": "rate(redis_rejected_connections_total{job=\"redis\",db_environment=~\"$environment\"}[5m])",
-          "legendFormat": "{{instance}}",
+          "expr": "sum by (instance) (rate(pg_stat_bgwriter_checkpoints_timed{job=\"postgres\",project=~\"$project\",env=~\"$environment\"}[5m]) + rate(pg_stat_bgwriter_checkpoints_req{job=\"postgres\",project=~\"$project\",env=~\"$environment\"}[5m]))",
+          "legendFormat": "{{project}} {{env}}",
           "refId": "A"
         }
       ],
-      "title": "Rejected Connections",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "victoriametrics"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 4,
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "min": 0,
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 24
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "multi"
-        }
-      },
-      "targets": [
-        {
-          "expr": "redis_rdb_last_bgsave_status{job=\"redis\",db_environment=~\"$environment\"}",
-          "legendFormat": "rdb save {{instance}}",
-          "refId": "A"
-        },
-        {
-          "expr": "redis_aof_last_rewrite_status{job=\"redis\",db_environment=~\"$environment\"}",
-          "legendFormat": "aof rewrite {{instance}}",
-          "refId": "B"
-        }
-      ],
-      "title": "Persistence Health",
+      "title": "Checkpoint Pressure",
       "type": "timeseries"
     }
   ],
@@ -474,28 +420,54 @@
   "style": "dark",
   "tags": [
     "monitoring",
-    "redis"
+    "postgres"
   ],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "production",
-          "value": "production"
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "victoriametrics"
         },
-        "definition": "label_values(up{job=\"redis\"}, db_environment)",
+        "definition": "label_values(up{job=\"postgres\"}, project)",
         "includeAll": true,
+        "allValue": ".*",
+        "label": "Project",
+        "multi": false,
+        "name": "project",
+        "options": [],
+        "query": {
+          "query": "label_values(up{job=\"postgres\"}, project)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "victoriametrics"
+        },
+        "definition": "label_values(up{job=\"postgres\",project=~\"$project\"}, env)",
+        "includeAll": true,
+        "allValue": ".*",
         "label": "Environment",
         "multi": false,
         "name": "environment",
         "options": [],
         "query": {
-          "query": "label_values(up{job=\"redis\"}, db_environment)",
+          "query": "label_values(up{job=\"postgres\",project=~\"$project\"}, env)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -510,8 +482,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Redis Overview",
-  "uid": "redis-overview",
+  "title": "Postgres Overview",
+  "uid": "postgres-overview",
   "version": 1,
   "weekStart": ""
 }
