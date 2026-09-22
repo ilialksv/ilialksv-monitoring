@@ -28,6 +28,7 @@ intentionally localized stays in that locale; repository prose does not.
 - `vmauth/config.yml` for remote-write auth.
 - `vmalert/rules/alerts.yml` for generic alerts.
 - `packs/genario/` for Genario HTTP dashboards and alerts.
+- `packs/genicly/` for Genicly HTTP dashboards and alerts.
 - `grafana/provisioning/**` and `grafana/dashboards/**` for shared dashboards.
 - `README.md` for the Dokploy and DNS runbook.
 

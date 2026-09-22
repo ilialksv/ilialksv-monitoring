@@ -1,0 +1,17 @@
+groups:
+  - name: genicly-backend
+    interval: 30s
+    rules:
+      - alert: GeniclyHigh5xxRate
+        expr: sum by (project, env) (rate(genicly_http_requests_total{job="backend",project="genicly",status_class="5xx"}[5m])) > 0.1
+        for: 10m
+        annotations:
+          summary: Genicly backend 5xx rate is high
+          description: Genicly {{ $labels.env }} is returning more than 0.1 5xx responses per second for 10 minutes.
+
+      - alert: GeniclyHighLatencyP95
+        expr: histogram_quantile(0.95, sum by (project, env, le) (rate(genicly_http_request_duration_seconds_bucket{job="backend",project="genicly"}[5m]))) > 1
+        for: 10m
+        annotations:
+          summary: Genicly backend p95 latency is high
+          description: Genicly {{ $labels.env }} p95 latency has been above 1 second for 10 minutes.

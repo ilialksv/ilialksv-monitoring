@@ -10,6 +10,6 @@ Each application server runs `agent/docker-compose.yml`. vmagent discovers conta
 
 `victoriametrics/scrape.yml` scrapes only the monitoring host. Do not put application domains or IPs there.
 
-Genario HTTP dashboards and alerts live in `packs/genario/`. Shared host and datastore boards do not name Genario.
+Project HTTP dashboards and alerts live in `packs/genario/` and `packs/genicly/`. Shared host and datastore boards do not name a project.
 
 The agent is not deployed on the monitoring VPS.

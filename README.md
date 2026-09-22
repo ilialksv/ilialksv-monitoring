@@ -53,7 +53,7 @@ labels:
 
 Errors are registered in the GlitchTip UI: create a project and put the DSN in the application env. The Genario frontend bakes `VITE_GLITCHTIP_DSN` into the bundle at build time, so a GlitchTip domain change needs a new frontend build, not only a restart. The backend reads `GLITCHTIP_DSN` when the process starts.
 
-Custom charts for non-standard metric names live in a pack. `packs/genario/` holds dashboards and alerts for `genario_http_*`. Postgres, Redis, host, and `up` work without a pack.
+Custom charts for non-standard metric names live in a pack. `packs/genario/` holds dashboards and alerts for `genario_http_*`, `packs/genicly/` for `genicly_http_*`. A pack's dashboard `uid`s are prefixed with the project name so they do not collide across packs; the Genario ones keep their original `uid`s. Postgres, Redis, host, and `up` work without a pack.
 
 ## Connect a server
 
@@ -102,6 +102,7 @@ Prepare this repository and the Dokploy panel before the DNS cutover. You restor
 | `vmauth/config.yml` | Remote-write ingress |
 | `vmalert/rules/alerts.yml` | Generic alerts |
 | `packs/genario/` | Genario metric dashboards and alerts |
+| `packs/genicly/` | Genicly metric dashboards and alerts |
 | `grafana/` | Shared dashboards and provisioning |
 | `.github/workflows/deploy.yaml` | Deploy the central stack to Dokploy on push to `main` |
 

@@ -25,3 +25,11 @@ providers:
     editable: true
     options:
       path: /etc/grafana/dashboards-genario
+  - name: genicly
+    orgId: 1
+    folder: Genicly
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/dashboards-genicly

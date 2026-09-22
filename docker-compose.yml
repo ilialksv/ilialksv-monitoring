@@ -37,6 +37,7 @@ services:
       # Not nested under the shared dashboards mount: that parent is read-only,
       # so Docker cannot create the mountpoint and the container fails to start.
       - ./packs/genario/dashboards:/etc/grafana/dashboards-genario:ro
+      - ./packs/genicly/dashboards:/etc/grafana/dashboards-genicly:ro
     networks:
       - monitoring
       - dokploy-network
@@ -80,6 +81,7 @@ services:
     command:
       - -rule=/etc/vmalert/rules/*.yml
       - -rule=/etc/vmalert/packs/genario/alerts.yml
+      - -rule=/etc/vmalert/packs/genicly/alerts.yml
       - -datasource.url=http://victoriametrics:8428
       - -notifier.url=http://alertmanager:9093
       - -httpListenAddr=:8880
@@ -87,6 +89,7 @@ services:
     volumes:
       - ./vmalert/rules:/etc/vmalert/rules:ro
       - ./packs/genario:/etc/vmalert/packs/genario:ro
+      - ./packs/genicly:/etc/vmalert/packs/genicly:ro
     networks:
       - monitoring
 
