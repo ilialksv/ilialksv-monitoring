@@ -112,7 +112,7 @@ Then delete both files. To rotate, repeat and redeploy the central stack and eve
 
 In DbGate, **Add new connection**. Nothing changes in this repository or on the app server.
 
-- **General:** take the values from that backend's `POSTGRES_URL` (`postgres://USER:PASSWORD@HOST:5432/DATABASE`):
+- **General:** leave **Use database URL** off: the SSH tunnel takes its target from the Server and Port fields, and with a URL it has none. Take the values from that backend's `POSTGRES_URL` (`postgres://USER:PASSWORD@HOST:5432/DATABASE`):
   - Server: `HOST`, the Dokploy service name;
   - Port: `5432`, or `6379` for Redis;
   - User, Password and Default database from the URL;
@@ -120,7 +120,7 @@ In DbGate, **Add new connection**. Nothing changes in this repository or on the 
 - **Is read only:** tick it on every production connection. DbGate then opens read-only Postgres sessions, so even a typed `UPDATE` fails.
 - **SSH Tunnel:**
   - tick **Use SSH tunnel**;
-  - Host: the app server IP; Port: `2222`;
+  - Host: the app server IP; Port: type `2222` (the `22` shown is only a placeholder);
   - SSH Authentication: **Key file**; Login: `tunnel`;
   - leave the key path at its default `/root/.ssh/id_rsa`.
 - Press **Test**, then **Save**.
