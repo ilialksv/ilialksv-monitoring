@@ -8,8 +8,8 @@ There is one Dokploy panel: `dokploy.ilialksv.ru`. Each deploy server has its ow
 
 | Service | Where | Public |
 | --- | --- | --- |
-| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, node_exporter for this VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427` |
-| vmagent + node_exporter | Each deploy server that runs applications | Nothing. Metrics are pushed to ingest |
+| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, DbGate, node_exporter for this VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427`, DbGate `:3000` |
+| vmagent + node_exporter + db-tunnel | Each deploy server that runs applications | Only db-tunnel `:2222`, open to the monitoring VPS IP. Metrics are pushed to ingest |
 | Application Postgres and Redis | Application server, Dokploy services | Only inside `dokploy-network` |
 
 Do not install the agent on the monitoring VPS. VictoriaMetrics scrapes that host itself.
@@ -31,6 +31,7 @@ Rename these in Dokploy if the names below do not fit. Each A record points at t
 - `grafana.ilialksv.ru` → Grafana, container port `3000`
 - `glitchtip.ilialksv.ru` → GlitchTip, port `8000`
 - `ingest.ilialksv.ru` → vmauth, port `8427`
+- `db.ilialksv.ru` → DbGate, port `3000`
 
 `dokploy.ilialksv.ru` stays on the panel VPS.
 
@@ -73,6 +74,59 @@ Backend `/metrics` is also closed by `METRICS_ALLOWED_IPS`. Set it to the `dokpl
 
 Set `POSTGRES_EXPORTER_DATA_SOURCE_NAME` in the application env, separate from `POSTGRES_URL`. If the URL has no query string, add `?sslmode=disable`. If it already has `?`, add `&sslmode=disable`. Do not append that suffix to `POSTGRES_URL`: a second `?` breaks the URL.
 
+## Database access
+
+DbGate at `db.ilialksv.ru` is the one panel for every project database. Databases stay unpublished: DbGate reaches each app server through SSH to the agent's `db-tunnel` container, which sits on `dokploy-network` and forwards to Dokploy service names.
+
+```mermaid
+flowchart LR
+  Browser -->|HTTPS| DbGate["DbGate, db.ilialksv.ru"]
+  DbGate -->|"SSH :2222, key only"| Tunnel["db-tunnel on the app server"]
+  Tunnel -->|dokploy-network| PG["Postgres :5432 / Redis :6379"]
+```
+
+`db-tunnel` accepts one key and permits nothing but TCP forwards to ports 5432 and 6379: no shell, no other ports. Production connections are marked read only, stage is editable.
+
+The panel shows personal data. Keep it on this VPS in Russia (152-FZ); do not move it to a server abroad.
+
+### Set up the key
+
+Create one key pair on your machine:
+
+```bash
+ssh-keygen -t ed25519 -N "" -C db-tunnel -f db-tunnel
+```
+
+- `db-tunnel.pub` goes into `DB_TUNNEL_PUBLIC_KEY` of every agent.
+- `base64 -w0 db-tunnel` goes into `DB_TUNNEL_PRIVATE_KEY_BASE64` of the central stack.
+
+Then delete both files. To rotate, repeat and redeploy the central stack and every agent.
+
+### Connect a server
+
+1. Redeploy the agent on that server with `DB_TUNNEL_PUBLIC_KEY` set. Its log prints the host key fingerprint.
+2. In the provider's cloud firewall, allow TCP `2222` from the monitoring VPS IP only. Docker-published ports bypass ufw, so the cloud firewall is the filter.
+3. Check from the monitoring VPS: `nc -vz <server IP> 2222`. Check from anywhere else: it must time out.
+
+### Add a database
+
+In DbGate, **Add new connection**. Nothing changes in this repository or on the app server.
+
+- **General:** take the values from that backend's `POSTGRES_URL` (`postgres://USER:PASSWORD@HOST:5432/DATABASE`):
+  - Server: `HOST`, the Dokploy service name;
+  - Port: `5432`, or `6379` for Redis;
+  - User, Password and Default database from the URL;
+  - Display name: for example `Genicly production`.
+- **Is read only:** tick it on every production connection. DbGate then opens read-only Postgres sessions, so even a typed `UPDATE` fails.
+- **SSH Tunnel:**
+  - tick **Use SSH tunnel**;
+  - Host: the app server IP; Port: `2222`;
+  - SSH Authentication: **Key file**; Login: `tunnel`;
+  - leave the key path at its default `/root/.ssh/id_rsa`.
+- Press **Test**, then **Save**.
+
+Connections live in the `dbgate_data` volume, with passwords encrypted. Do not delete that volume: the connections would have to be added again.
+
 ## Genario move runbook
 
 Prepare this repository and the Dokploy panel before the DNS cutover. You restore the PostgreSQL contents. Redis starts empty. VictoriaMetrics history and GlitchTip events are not migrated.
@@ -98,6 +152,7 @@ Prepare this repository and the Dokploy panel before the DNS cutover. You restor
 | --- | --- |
 | `docker-compose.yml` | Central stack |
 | `agent/` | Agent for a deploy server |
+| `db-tunnel/` | Forward-only SSH image the agent runs for DbGate |
 | `victoriametrics/scrape.yml` | node_exporter on the monitoring VPS only |
 | `vmauth/config.yml` | Remote-write ingress |
 | `vmalert/rules/alerts.yml` | Generic alerts |

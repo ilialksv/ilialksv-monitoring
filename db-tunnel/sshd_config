@@ -1,0 +1,30 @@
+# Forward-only SSH for DbGate on the monitoring VPS. No shell, no files:
+# the only thing a client can do is open a TCP connection to a database port
+# on dokploy-network.
+
+Port 2222
+HostKey /etc/ssh/keys/ssh_host_ed25519_key
+PidFile none
+LogLevel VERBOSE
+
+AllowUsers tunnel
+PermitRootLogin no
+AuthorizedKeysFile /etc/ssh/authorized_keys/%u
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+
+# Postgres and Redis on any Dokploy service name.
+AllowTcpForwarding local
+PermitOpen *:5432 *:6379
+AllowStreamLocalForwarding no
+GatewayPorts no
+PermitTunnel no
+X11Forwarding no
+AllowAgentForwarding no
+PermitTTY no
+PermitUserRC no
+ForceCommand /bin/false
+
+ClientAliveInterval 30
+ClientAliveCountMax 3

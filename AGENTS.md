@@ -13,8 +13,9 @@ intentionally localized stays in that locale; repository prose does not.
 ## Project Snapshot
 
 - Purpose: project-independent monitoring for Dokploy servers.
-- Central stack: Grafana, VictoriaMetrics, vmauth, vmalert, Alertmanager, GlitchTip.
-- Agents: one `vmagent` + `node_exporter` compose per application server.
+- Central stack: Grafana, VictoriaMetrics, vmauth, vmalert, Alertmanager, GlitchTip,
+  DbGate (database panel).
+- Agents: one `vmagent` + `node_exporter` + `db-tunnel` compose per application server.
 - Applications are discovered by Docker labels, not by editing scrape targets.
 - Deployment: GitHub Actions deploys the root compose on pushes to `main`.
   Each agent is a separate Dokploy compose app using `agent/docker-compose.yml`.
@@ -42,9 +43,15 @@ app containers with monitoring.* labels
 GlitchTip stays on the monitoring server and receives client/server errors
 ```
 
-Public ports: Grafana `3000`, GlitchTip `8000`, vmauth `8427`, all via Dokploy
-domains. VictoriaMetrics, vmalert, Alertmanager, node_exporter, and GlitchTip
-datastores are not published.
+Public ports: Grafana `3000`, GlitchTip `8000`, vmauth `8427`, DbGate `3000`, all
+via Dokploy domains. VictoriaMetrics, vmalert, Alertmanager, node_exporter, and
+GlitchTip datastores are not published. On app servers only `db-tunnel` `2222` is
+published, filtered to the monitoring VPS IP by the provider firewall.
+
+```text
+DbGate -> SSH :2222 (key only, forward-only) -> db-tunnel on dokploy-network
+  -> Postgres :5432 / Redis :6379 by Dokploy service name
+```
 
 Do not deploy the agent compose onto the monitoring VPS. That host is scraped
 by VictoriaMetrics directly.
@@ -66,6 +73,9 @@ its own `node-exporter:9100` and the `instance` label would otherwise collide.
 ## Safety Rules
 
 - Do not commit real `.env` values, passwords, SMTP credentials, or GlitchTip secrets.
+- Image tags are pinned in the compose files, not in env, so one commit upgrades
+  every server. Never bump the `postgres` major of GlitchTip's database: the
+  data directory does not survive a major upgrade.
 - Do not run `docker compose up`, `down`, `pull`, `restart`, or `exec` unless the
   user explicitly asks for that exact operation.
 - Do not publish VictoriaMetrics, vmalert, Alertmanager, exporter ports, or
@@ -74,6 +84,11 @@ its own `node-exporter:9100` and the `instance` label would otherwise collide.
   the application server. Do not broaden it.
 - Keep Grafana datasource UID `victoriametrics` and stable dashboard `uid`s.
 - Generic alerts must not mention a product name. Product metrics belong in `packs/`.
+- Never publish a database port. DbGate reaches databases only through
+  `db-tunnel`; widen its `PermitOpen` only for a new database port.
+- DbGate connections are added in its UI and stored in the `dbgate_data` volume;
+  never remove that volume. Production connections are marked read only.
+- DbGate shows personal data: it stays on the monitoring VPS in Russia (152-FZ).
 - Do not put `environment: production` on the whole VictoriaMetrics stream. Stage
   and production are the `env` label.
 

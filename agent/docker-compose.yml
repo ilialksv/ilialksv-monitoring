@@ -5,7 +5,7 @@
 
 services:
   vmagent:
-    image: ${VMAGENT_IMAGE:?VMAGENT_IMAGE is required}
+    image: victoriametrics/vmagent:v1.143.0
     restart: unless-stopped
     command:
       - -promscrape.config=/etc/vmagent/scrape.yml
@@ -21,7 +21,7 @@ services:
       - dokploy-network
 
   node-exporter:
-    image: ${NODE_EXPORTER_IMAGE:?NODE_EXPORTER_IMAGE is required}
+    image: prom/node-exporter:v1.9.1
     restart: unless-stopped
     pid: host
     command:
@@ -37,8 +37,26 @@ services:
     networks:
       - agent
 
+  # Forward-only SSH so DbGate on the monitoring VPS reaches the Postgres and
+  # Redis services on dokploy-network. Allow this port in the provider firewall
+  # from the monitoring VPS IP only: Docker-published ports bypass ufw.
+  db-tunnel:
+    build: ../db-tunnel
+    restart: unless-stopped
+    environment:
+      DB_TUNNEL_PUBLIC_KEY: ${DB_TUNNEL_PUBLIC_KEY:?DB_TUNNEL_PUBLIC_KEY is required}
+    ports:
+      - "${DB_TUNNEL_PORT:-2222}:2222"
+    volumes:
+      - db_tunnel_host_keys:/etc/ssh/keys
+    networks:
+      - dokploy-network
+
 networks:
   agent:
     driver: bridge
   dokploy-network:
     external: true
+
+volumes:
+  db_tunnel_host_keys:

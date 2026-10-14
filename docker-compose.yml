@@ -1,7 +1,7 @@
 # Dokploy injects these variables from the application Environment.
 # Set the Dokploy Compose command to --force-recreate, or Grafana will not
 # reread dashboard JSON from the bind mount.
-# Only grafana (3000), glitchtip (8000), and vmauth (8427) are public.
+# Only grafana (3000), glitchtip (8000), vmauth (8427), and dbgate (3000) are public.
 # Every other service stays on the monitoring network.
 
 x-glitchtip-environment: &glitchtip-environment
@@ -19,7 +19,7 @@ x-glitchtip-environment: &glitchtip-environment
 
 services:
   grafana:
-    image: ${GRAFANA_IMAGE}
+    image: grafana/grafana-oss:11.5.2
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
@@ -43,7 +43,7 @@ services:
       - dokploy-network
 
   victoriametrics:
-    image: ${VICTORIAMETRICS_IMAGE}
+    image: victoriametrics/victoria-metrics:v1.143.0
     restart: unless-stopped
     environment:
       SERVER_NAME: ${SERVER_NAME:?SERVER_NAME is required}
@@ -59,7 +59,7 @@ services:
       - monitoring
 
   vmauth:
-    image: ${VMAUTH_IMAGE}
+    image: victoriametrics/vmauth:v1.143.0
     restart: unless-stopped
     environment:
       VMAUTH_USERNAME: ${VMAUTH_USERNAME:?VMAUTH_USERNAME is required}
@@ -76,7 +76,7 @@ services:
       - dokploy-network
 
   vmalert:
-    image: ${VMALERT_IMAGE}
+    image: victoriametrics/vmalert:v1.143.0
     restart: unless-stopped
     command:
       - -rule=/etc/vmalert/rules/*.yml
@@ -94,7 +94,7 @@ services:
       - monitoring
 
   alertmanager:
-    image: ${ALERTMANAGER_IMAGE}
+    image: prom/alertmanager:v0.28.1
     restart: unless-stopped
     entrypoint:
       - /bin/sh
@@ -124,7 +124,7 @@ services:
       - monitoring
 
   node-exporter:
-    image: ${NODE_EXPORTER_IMAGE}
+    image: prom/node-exporter:v1.9.1
     restart: unless-stopped
     pid: host
     command:
@@ -141,7 +141,7 @@ services:
       - monitoring
 
   glitchtip-postgres:
-    image: ${GLITCHTIP_POSTGRES_IMAGE}
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${GLITCHTIP_POSTGRES_DB}
@@ -161,7 +161,7 @@ services:
       - monitoring
 
   glitchtip-valkey:
-    image: ${GLITCHTIP_VALKEY_IMAGE}
+    image: valkey/valkey:9
     restart: unless-stopped
     command:
       - valkey-server
@@ -181,7 +181,7 @@ services:
       - monitoring
 
   glitchtip:
-    image: ${GLITCHTIP_IMAGE}
+    image: glitchtip/glitchtip:6
     restart: unless-stopped
     depends_on:
       glitchtip-postgres:
@@ -199,6 +199,38 @@ services:
       - monitoring
       - dokploy-network
 
+  # Web panel for every project database: db.ilialksv.ru. Connections are
+  # added in its UI and kept in dbgate_data, passwords encrypted. It reaches
+  # each app server through the agent's forward-only db-tunnel, never through a
+  # published database port. It shows personal data, so it stays on this VPS
+  # in Russia (152-FZ).
+  dbgate:
+    image: dbgate/dbgate:7.3.2-alpine
+    restart: unless-stopped
+    # The key goes to /root/.ssh/id_rsa because that is the default path in
+    # the SSH tab of DbGate's connection form; the key itself is ed25519.
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        mkdir -p /root/.ssh
+        printf '%s' "$$DB_TUNNEL_PRIVATE_KEY_BASE64" | base64 -d > /root/.ssh/id_rsa
+        chmod 600 /root/.ssh/id_rsa
+        exec /home/dbgate-docker/entrypoint.sh
+    environment:
+      LOGIN: ${DBGATE_LOGIN:?DBGATE_LOGIN is required}
+      PASSWORD: ${DBGATE_PASSWORD:?DBGATE_PASSWORD is required}
+      DB_TUNNEL_PRIVATE_KEY_BASE64: ${DB_TUNNEL_PRIVATE_KEY_BASE64:?DB_TUNNEL_PRIVATE_KEY_BASE64 is required}
+      USAGE_ANALYTICS: "false"
+    expose:
+      - "3000"
+    volumes:
+      - dbgate_data:/root/.dbgate
+    networks:
+      - monitoring
+      - dokploy-network
+
 networks:
   monitoring:
     driver: bridge
@@ -211,3 +243,4 @@ volumes:
   alertmanager_data:
   glitchtip_pg_data:
   glitchtip_uploads:
+  dbgate_data:
