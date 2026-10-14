@@ -8,7 +8,7 @@ There is one Dokploy panel: `dokploy.ilialksv.ru`. Each deploy server has its ow
 
 | Service | Where | Public |
 | --- | --- | --- |
-| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, DbGate, node_exporter for this VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427`, DbGate `:3000` |
+| Grafana, VictoriaMetrics, vmalert, Alertmanager, GlitchTip, vmauth, DbGate, Umami, node_exporter for this VPS | Monitoring VPS | Grafana `:3000`, GlitchTip `:8000`, vmauth `:8427`, DbGate `:3000`, Umami `:3000` |
 | vmagent + node_exporter + db-tunnel | Each deploy server that runs applications | Only db-tunnel `:2222`, open to the monitoring VPS IP. Metrics are pushed to ingest |
 | Application Postgres and Redis | Application server, Dokploy services | Only inside `dokploy-network` |
 
@@ -32,6 +32,7 @@ Rename these in Dokploy if the names below do not fit. Each A record points at t
 - `glitchtip.ilialksv.ru` → GlitchTip, port `8000`
 - `ingest.ilialksv.ru` → vmauth, port `8427`
 - `db.ilialksv.ru` → DbGate, port `3000`
+- `umami.ilialksv.ru` → Umami, port `3000`
 
 `dokploy.ilialksv.ru` stays on the panel VPS.
 
@@ -126,6 +127,27 @@ In DbGate, **Add new connection**. Nothing changes in this repository or on the 
 - Press **Test**, then **Save**.
 
 Connections live in the `dbgate_data` volume, with passwords encrypted. Do not delete that volume: the connections would have to be added again.
+
+## Analytics
+
+Umami at `umami.ilialksv.ru` is the web analytics for every project: the dashboard, the tracker and the collect endpoint. It stores IPs, account IDs and session replays, so it stays on this VPS in Russia (152-FZ).
+
+The tracker is served as `/p.js` and sends to `/api/p`: ad blockers match Umami's default `script.js` and `/api/send`. Session replay uses `/recorder.js` and `/api/record`, which cannot be renamed.
+
+### First start
+
+1. Fill `UMAMI_*` in the stack env; generate the two secrets as `.env.example` shows. Add the domain `umami.ilialksv.ru` → service `umami`, port `3000`, and redeploy.
+2. Log in as `admin` / `umami`, change the password at once, and turn on two-factor authentication in the profile.
+
+### Add a website
+
+1. **Websites → Add website** with the site's domain. Copy its website ID into that site's build secret `VITE_UMAMI_WEBSITE_ID`.
+2. **Edit → Replays & Heatmaps:** turn on Replays and Heatmaps. Set:
+   - Mask level `moderate`, which masks every input;
+   - Block selector `[data-analytics-private]`, which the sites put on private content;
+   - Sample rate `1` while traffic is small.
+
+Sites load the tracker only after the visitor accepts analytics cookies.
 
 ## Genario move runbook
 

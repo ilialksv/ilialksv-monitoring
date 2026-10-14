@@ -1,7 +1,8 @@
 # Dokploy injects these variables from the application Environment.
 # Set the Dokploy Compose command to --force-recreate, or Grafana will not
 # reread dashboard JSON from the bind mount.
-# Only grafana (3000), glitchtip (8000), vmauth (8427), and dbgate (3000) are public.
+# Only grafana (3000), glitchtip (8000), vmauth (8427), dbgate (3000), and
+# umami (3000) are public.
 # Every other service stays on the monitoring network.
 
 x-glitchtip-environment: &glitchtip-environment
@@ -231,6 +232,61 @@ services:
       - monitoring
       - dokploy-network
 
+  # Web analytics for every project: umami.ilialksv.ru serves the dashboard,
+  # the tracker and the collect endpoint. It stores IPs, account IDs and
+  # session replays, so it stays on this VPS in Russia (152-FZ).
+  umami:
+    image: ghcr.io/umami-software/umami:3.4.0
+    restart: unless-stopped
+    init: true
+    depends_on:
+      umami-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${UMAMI_POSTGRES_USER}:${UMAMI_POSTGRES_PASSWORD}@umami-postgres:5432/${UMAMI_POSTGRES_DB}
+      APP_SECRET: ${UMAMI_APP_SECRET:?UMAMI_APP_SECRET is required}
+      TWO_FACTOR_ENCRYPTION_KEY: ${UMAMI_TWO_FACTOR_ENCRYPTION_KEY:?UMAMI_TWO_FACTOR_ENCRYPTION_KEY is required}
+      # Neutral names: ad blockers match the default script.js and /api/send.
+      TRACKER_SCRIPT_NAME: p.js
+      COLLECT_API_ENDPOINT: /api/p
+      DISABLE_TELEMETRY: "1"
+      DISABLE_UPDATES: "1"
+      # No external calls, website favicons included.
+      PRIVATE_MODE: "1"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fs http://localhost:3000/api/heartbeat
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    expose:
+      - "3000"
+    networks:
+      - monitoring
+      - dokploy-network
+
+  umami-postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${UMAMI_POSTGRES_DB}
+      POSTGRES_USER: ${UMAMI_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${UMAMI_POSTGRES_PASSWORD:?UMAMI_POSTGRES_PASSWORD is required}
+    volumes:
+      - umami_pg_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - monitoring
+
 networks:
   monitoring:
     driver: bridge
@@ -244,3 +300,4 @@ volumes:
   glitchtip_pg_data:
   glitchtip_uploads:
   dbgate_data:
+  umami_pg_data:
