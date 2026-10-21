@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     command:
       - -promscrape.config=/etc/vmagent/scrape.yml
+      - -promscrape.dockerSDCheckInterval=15s
       - -remoteWrite.url=${VMAGENT_REMOTE_WRITE_URL:?VMAGENT_REMOTE_WRITE_URL is required}
       - -remoteWrite.basicAuth.username=${VMAGENT_REMOTE_WRITE_USERNAME:?VMAGENT_REMOTE_WRITE_USERNAME is required}
       - -remoteWrite.basicAuth.password=${VMAGENT_REMOTE_WRITE_PASSWORD:?VMAGENT_REMOTE_WRITE_PASSWORD is required}

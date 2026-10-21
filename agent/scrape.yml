@@ -13,8 +13,10 @@ scrape_configs:
   - job_name: docker
     scrape_interval: 15s
     docker_sd_configs:
+      # vmagent takes the refresh period from -promscrape.dockerSDCheckInterval
+      # (agent/docker-compose.yml): v1.143 refuses refresh_interval here and
+      # exits on start.
       - host: unix:///var/run/docker.sock
-        refresh_interval: 15s
     relabel_configs:
       - source_labels: [__meta_docker_container_label_monitoring_scrape]
         regex: "true"

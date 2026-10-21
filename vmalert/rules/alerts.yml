@@ -9,6 +9,18 @@ groups:
           summary: "{{ $labels.job }} target is down"
           description: Scrape target {{ $labels.job }} (project {{ $labels.project }}, env {{ $labels.env }}, server {{ $labels.server }}) at {{ $labels.instance }} has been unreachable for more than 2 minutes.
 
+      # TargetDown needs an `up` series to be 0. When a server's vmagent itself
+      # stops (it crash-looped on a config it refused in 2026-10), every series
+      # of that server just ends and nothing fires. This catches a server that
+      # reported in the past week and is silent now; a server taken out on
+      # purpose keeps firing until a week has passed.
+      - alert: ServerSilent
+        expr: group by (server) (max_over_time(up{job="node"}[7d])) unless group by (server) (up{job="node"})
+        for: 5m
+        annotations:
+          summary: "{{ $labels.server }} stopped sending metrics"
+          description: No metrics have arrived from server {{ $labels.server }} for more than 5 minutes. Its vmagent is down, crash-looping or cannot reach vmauth.
+
   - name: hosts
     interval: 30s
     rules:
