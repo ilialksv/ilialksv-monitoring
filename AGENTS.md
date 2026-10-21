@@ -28,9 +28,9 @@ intentionally localized stays in that locale; repository prose does not.
 - `victoriametrics/scrape.yml` for the monitoring host only.
 - `vmauth/config.yml` for remote-write auth.
 - `vmalert/rules/alerts.yml` for generic alerts.
-- `packs/genario/` for Genario HTTP dashboards and alerts.
-- `packs/genicly/` for Genicly HTTP dashboards and alerts.
-- `grafana/provisioning/**` and `grafana/dashboards/**` for shared dashboards.
+- `packs/genario/` and `packs/genicly/` for product alerts on custom metric names.
+- `grafana/dashboards/<project>/` for that project's Grafana folder.
+- `grafana/provisioning/**` for the datasource and the dashboard provider.
 - `README.md` for the Dokploy and DNS runbook.
 
 ## Architecture
@@ -109,9 +109,12 @@ Parse edited JSON and YAML. Do not start containers as part of default validatio
 ### Connect A Project
 
 1. Add the label contract to that project's compose. Do not edit central scrape config.
-2. Add a dashboard pack under `packs/<project>/` only when metric names are custom.
-3. Mount the pack's alerts in `vmalert` and its dashboards in Grafana provisioning
-   if you added files.
+2. Add `grafana/dashboards/<project>/` with `host-overview`, `postgres-overview`,
+   `redis-overview` (if the project runs Redis), `api-endpoints` and
+   `backend-overview`, copied from another project and pinned to this one.
+   The directory becomes the Grafana folder; no provisioning change is needed.
+3. Add `packs/<project>/alerts.yml` only when metric names are custom, and mount
+   it in `vmalert`.
 4. Point the app's GlitchTip DSN at this stack. Rebuild clients that bake the DSN in.
 
 ### Connect A Server
@@ -124,7 +127,10 @@ Parse edited JSON and YAML. Do not start containers as part of default validatio
 
 - Generic rules stay in `vmalert/rules/alerts.yml`.
 - Product rules stay in `packs/<project>/alerts.yml`.
-- Shared dashboards live in `grafana/dashboards/hosts` and `grafana/dashboards/datastores`.
+- Every dashboard lives in its project's folder, `grafana/dashboards/<project>/`.
+  There are no shared folders. Project folders and dashboard names are
+  lowercase (`genicly`, `host-overview`); a dashboard's `uid` is
+  `<project>-<dashboard>`.
 - Use `for:`, `summary`, and `description`.
 - vmalert evaluates rules. Alertmanager only routes them.
 

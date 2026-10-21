@@ -9,7 +9,8 @@ Use `AGENTS.md` as the shared project contract.
 1. Identify the area: central compose, agent, vmauth, generic alerts, a project
    pack, Grafana, or the README runbook.
 2. Read the matching local files before editing.
-3. Keep product-specific metric names inside `packs/<project>/`.
+3. Keep product-specific metric names inside `grafana/dashboards/<project>/` and
+   `packs/<project>/`.
 4. A new project does not get a new job in `victoriametrics/scrape.yml`.
 5. Validate with the compose config commands in `AGENTS.md`. Do not start
    containers unless the user explicitly asks.

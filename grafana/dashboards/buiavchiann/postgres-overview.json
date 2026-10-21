@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -419,35 +418,27 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "monitoring",
-    "postgres"
+    "buiavchiann"
   ],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "victoriametrics"
-        },
-        "definition": "label_values(up{job=\"postgres\"}, project)",
-        "includeAll": true,
-        "allValue": ".*",
-        "label": "Project",
-        "multi": false,
         "name": "project",
-        "options": [],
-        "query": {
-          "query": "label_values(up{job=\"postgres\"}, project)",
-          "refId": "StandardVariableQuery"
+        "type": "constant",
+        "query": "buiavchiann",
+        "hide": 2,
+        "current": {
+          "text": "buiavchiann",
+          "value": "buiavchiann"
         },
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
+        "options": [
+          {
+            "selected": true,
+            "text": "buiavchiann",
+            "value": "buiavchiann"
+          }
+        ],
+        "skipUrlSync": false
       },
       {
         "current": {
@@ -482,8 +473,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Postgres Overview",
-  "uid": "postgres-overview",
+  "title": "postgres-overview",
+  "uid": "buiavchiann-postgres-overview",
   "version": 1,
   "weekStart": ""
 }

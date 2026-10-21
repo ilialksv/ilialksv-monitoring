@@ -17,7 +17,8 @@ There are no `backend-node`, `frontend-node`, `db-node`, or `monitoring-node` jo
 
 ## Dashboards
 
-- `grafana/dashboards/hosts` — Host Overview, uid `host-overview`
-- `grafana/dashboards/datastores` — Postgres and Redis
-- `packs/genario/dashboards` — Backend Overview and API Endpoints, uids `backend-overview`, `api-endpoints`
-- `packs/genicly/dashboards` — Backend Overview and API Endpoints, uids `genicly-backend-overview`, `genicly-api-endpoints`
+One Grafana folder per project, `grafana/dashboards/<project>/`, uid `<project>-<dashboard>`:
+
+- `genario`, `genicly` — host-overview, postgres-overview, redis-overview, api-endpoints, backend-overview
+- `buiavchiann` — host-overview, postgres-overview, api-endpoints, backend-overview (no Redis)
+- `monitoring` — host-overview

@@ -1,35 +1,13 @@
 apiVersion: 1
 
 providers:
-  - name: hosts
+  # One folder per project, named after its directory under
+  # grafana/dashboards: genario, genicly, buiavchiann, monitoring.
+  - name: projects
     orgId: 1
-    folder: Hosts
     type: file
     disableDeletion: false
     editable: true
     options:
-      path: /etc/grafana/dashboards/hosts
-  - name: datastores
-    orgId: 1
-    folder: Datastores
-    type: file
-    disableDeletion: false
-    editable: true
-    options:
-      path: /etc/grafana/dashboards/datastores
-  - name: genario
-    orgId: 1
-    folder: Genario
-    type: file
-    disableDeletion: false
-    editable: true
-    options:
-      path: /etc/grafana/dashboards-genario
-  - name: genicly
-    orgId: 1
-    folder: Genicly
-    type: file
-    disableDeletion: false
-    editable: true
-    options:
-      path: /etc/grafana/dashboards-genicly
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: true

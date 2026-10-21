@@ -17,6 +17,11 @@ scrape_configs:
       # (agent/docker-compose.yml): v1.143 refuses refresh_interval here and
       # exits on start.
       - host: unix:///var/run/docker.sock
+        # A target for every network of a container, not only its first one:
+        # a compose service can be on its project's default network first and
+        # on dokploy-network second, and the keep rule below wants the latter.
+        # buiavchiann's backend was dropped this way in 2026-10.
+        match_first_network: false
     relabel_configs:
       - source_labels: [__meta_docker_container_label_monitoring_scrape]
         regex: "true"

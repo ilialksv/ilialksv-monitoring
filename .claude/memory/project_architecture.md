@@ -10,7 +10,7 @@ Each application server runs `agent/docker-compose.yml`. vmagent discovers conta
 
 `victoriametrics/scrape.yml` scrapes only the monitoring host. Do not put application domains or IPs there.
 
-Project HTTP dashboards and alerts live in `packs/genario/` and `packs/genicly/`. Shared host and datastore boards do not name a project.
+Every dashboard lives in its project's Grafana folder, `grafana/dashboards/<project>/`; there are no shared folders. Product alerts live in `packs/genario/` and `packs/genicly/`.
 
 The agent is not deployed on the monitoring VPS.
 

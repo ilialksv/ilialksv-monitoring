@@ -11,8 +11,8 @@ You are a Grafana dashboard reviewer for `ilialksv-monitoring`.
 - JSON is parseable.
 - Dashboard `uid` is stable and unique.
 - Datasource UID is `victoriametrics`.
-- Shared boards use `project`, `env`, `job`, and `server`. Host boards use `job="node"`.
-- Product boards live in `packs/<project>/dashboards` and filter that project.
-- New folders are provisioned in `grafana/provisioning/dashboards/dashboards.yml` and mounted in `docker-compose.yml`.
+- Every board lives in `grafana/dashboards/<project>/` and is pinned to that project: a hidden constant `server` (host) or `project` (datastores), or the project's own metric names.
+- Folder and dashboard names are lowercase; the `title` is the file name and the `uid` is `<project>-<dashboard>`.
+- Host boards use `job="node"`. The directory is the folder: no provisioning or mount change is needed.
 
 Report concrete issues with file and line references.

@@ -55,7 +55,7 @@ labels:
 
 Errors are registered in the GlitchTip UI: create a project and put the DSN in the application env. The Genario frontend bakes `VITE_GLITCHTIP_DSN` into the bundle at build time, so a GlitchTip domain change needs a new frontend build, not only a restart. The backend reads `GLITCHTIP_DSN` when the process starts.
 
-Custom charts for non-standard metric names live in a pack. `packs/genario/` holds dashboards and alerts for `genario_http_*`, `packs/genicly/` for `genicly_http_*`. A pack's dashboard `uid`s are prefixed with the project name so they do not collide across packs; the Genario ones keep their original `uid`s. Postgres, Redis, host, and `up` work without a pack.
+Grafana has one folder per project, named after its directory in `grafana/dashboards/`: `genario`, `genicly`, `buiavchiann`, `monitoring`. A folder holds that project's `host-overview`, `postgres-overview`, `redis-overview` (only where the project runs Redis), `api-endpoints` and `backend-overview`, each pinned to the project's `server` or `project` label; `monitoring` holds `host-overview` only. A dashboard's `uid` is `<project>-<dashboard>`. Product alerts for custom metric names (`genario_http_*`, `genicly_http_*`) live in `packs/<project>/alerts.yml`.
 
 ## Connect a server
 
@@ -162,9 +162,9 @@ Prepare this repository and the Dokploy panel before the DNS cutover. You restor
 7. Switch A records. `stage.` domains first, then production. Genario domains point at the Genario VPS IP. Monitoring domains point at the monitoring VPS IP.
 8. Check stage, then production:
    - the site and API open on the existing hostnames;
-   - Grafana, Hosts folder, shows servers `genario` and `monitoring`;
-   - Datastores shows `project="genario"` for postgres and redis, both envs;
-   - the Genario folder shows backend traffic for production and stage;
+   - Grafana, folders `genario` and `monitoring`: `host-overview` shows each server;
+   - `genario/postgres-overview` and `genario/redis-overview` show both envs;
+   - `genario/backend-overview` shows backend traffic for production and stage;
    - a test client error and an API error land in the new GlitchTip.
 9. Turn off the old frontend, backend, database, and monitoring VPS. Firewall holes on 9100, 9187, 9121, and the stage ports are no longer needed.
 
@@ -178,9 +178,10 @@ Prepare this repository and the Dokploy panel before the DNS cutover. You restor
 | `victoriametrics/scrape.yml` | node_exporter on the monitoring VPS only |
 | `vmauth/config.yml` | Remote-write ingress |
 | `vmalert/rules/alerts.yml` | Generic alerts |
-| `packs/genario/` | Genario metric dashboards and alerts |
-| `packs/genicly/` | Genicly metric dashboards and alerts |
-| `grafana/` | Shared dashboards and provisioning |
+| `packs/genario/` | Genario metric alerts |
+| `packs/genicly/` | Genicly metric alerts |
+| `grafana/dashboards/<project>/` | One Grafana folder per project |
+| `grafana/provisioning/` | Datasource and dashboard provisioning |
 | `.github/workflows/deploy.yaml` | Deploy the central stack to Dokploy on push to `main` |
 
 ## Config check

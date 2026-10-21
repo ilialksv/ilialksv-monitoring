@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -473,35 +472,27 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "monitoring",
-    "redis"
+    "genario"
   ],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "victoriametrics"
-        },
-        "definition": "label_values(up{job=\"redis\"}, project)",
-        "includeAll": true,
-        "allValue": ".*",
-        "label": "Project",
-        "multi": false,
         "name": "project",
-        "options": [],
-        "query": {
-          "query": "label_values(up{job=\"redis\"}, project)",
-          "refId": "StandardVariableQuery"
+        "type": "constant",
+        "query": "genario",
+        "hide": 2,
+        "current": {
+          "text": "genario",
+          "value": "genario"
         },
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
+        "options": [
+          {
+            "selected": true,
+            "text": "genario",
+            "value": "genario"
+          }
+        ],
+        "skipUrlSync": false
       },
       {
         "current": {
@@ -536,8 +527,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Redis Overview",
-  "uid": "redis-overview",
+  "title": "redis-overview",
+  "uid": "genario-redis-overview",
   "version": 1,
   "weekStart": ""
 }

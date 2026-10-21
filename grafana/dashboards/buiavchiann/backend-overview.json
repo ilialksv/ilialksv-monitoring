@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -66,7 +65,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum(rate(genicly_http_requests_total{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m]))",
+          "expr": "sum(rate(buiavchiann_http_requests_total{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m]))",
           "legendFormat": "requests",
           "refId": "A"
         }
@@ -119,7 +118,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum by (status_class) (rate(genicly_http_requests_total{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m]))",
+          "expr": "sum by (status_class) (rate(buiavchiann_http_requests_total{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m]))",
           "legendFormat": "{{status_class}}",
           "refId": "A"
         }
@@ -172,7 +171,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.5, sum by (le) (rate(genicly_http_request_duration_seconds_bucket{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(buiavchiann_http_request_duration_seconds_bucket{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -181,7 +180,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(genicly_http_request_duration_seconds_bucket{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(buiavchiann_http_request_duration_seconds_bucket{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -190,7 +189,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(genicly_http_request_duration_seconds_bucket{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(buiavchiann_http_request_duration_seconds_bucket{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m])))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -243,7 +242,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "sum(genicly_http_requests_in_flight{job=\"backend\",project=\"genicly\",env=~\"$environment\"})",
+          "expr": "sum(buiavchiann_http_requests_in_flight{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"})",
           "legendFormat": "in-flight",
           "refId": "A"
         }
@@ -296,7 +295,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genicly_process_resident_memory_bytes{job=\"backend\",project=\"genicly\",env=~\"$environment\"}",
+          "expr": "buiavchiann_process_resident_memory_bytes{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}",
           "legendFormat": "rss",
           "refId": "A"
         }
@@ -349,7 +348,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genicly_nodejs_heap_size_used_bytes{job=\"backend\",project=\"genicly\",env=~\"$environment\"}",
+          "expr": "buiavchiann_nodejs_heap_size_used_bytes{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}",
           "legendFormat": "heap used",
           "refId": "A"
         }
@@ -402,7 +401,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "rate(genicly_process_cpu_seconds_total{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m])",
+          "expr": "rate(buiavchiann_process_cpu_seconds_total{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m])",
           "legendFormat": "cpu seconds/sec",
           "refId": "A"
         }
@@ -455,7 +454,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genicly_nodejs_eventloop_lag_p50_seconds{job=\"backend\",project=\"genicly\",env=~\"$environment\"}",
+          "expr": "buiavchiann_nodejs_eventloop_lag_p50_seconds{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}",
           "legendFormat": "p50",
           "refId": "A"
         },
@@ -464,7 +463,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genicly_nodejs_eventloop_lag_p99_seconds{job=\"backend\",project=\"genicly\",env=~\"$environment\"}",
+          "expr": "buiavchiann_nodejs_eventloop_lag_p99_seconds{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}",
           "legendFormat": "p99",
           "refId": "B"
         },
@@ -473,7 +472,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "genicly_nodejs_eventloop_lag_max_seconds{job=\"backend\",project=\"genicly\",env=~\"$environment\"}",
+          "expr": "buiavchiann_nodejs_eventloop_lag_max_seconds{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}",
           "legendFormat": "max",
           "refId": "C"
         }
@@ -526,7 +525,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "rate(genicly_nodejs_gc_duration_seconds_sum{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m]) / rate(genicly_nodejs_gc_duration_seconds_count{job=\"backend\",project=\"genicly\",env=~\"$environment\"}[5m])",
+          "expr": "rate(buiavchiann_nodejs_gc_duration_seconds_sum{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m]) / rate(buiavchiann_nodejs_gc_duration_seconds_count{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"}[5m])",
           "legendFormat": "{{kind}} avg",
           "refId": "A"
         }
@@ -604,7 +603,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "min(up{job=\"backend\",project=\"genicly\",env=~\"$environment\"})",
+          "expr": "min(up{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"})",
           "legendFormat": "scrape health",
           "refId": "A"
         }
@@ -662,7 +661,7 @@
             "type": "prometheus",
             "uid": "victoriametrics"
           },
-          "expr": "min(time() - genicly_process_start_time_seconds{job=\"backend\",project=\"genicly\",env=~\"$environment\"})",
+          "expr": "min(time() - buiavchiann_process_start_time_seconds{job=\"backend\",project=\"buiavchiann\",env=~\"$environment\"})",
           "legendFormat": "uptime",
           "refId": "A"
         }
@@ -675,8 +674,7 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "monitoring",
-    "backend"
+    "buiavchiann"
   ],
   "templating": {
     "list": [
@@ -690,14 +688,14 @@
           "type": "prometheus",
           "uid": "victoriametrics"
         },
-        "definition": "label_values(genicly_http_requests_total{job=\"backend\",project=\"genicly\"}, env)",
+        "definition": "label_values(buiavchiann_http_requests_total{job=\"backend\",project=\"buiavchiann\"}, env)",
         "includeAll": true,
         "label": "Environment",
         "multi": false,
         "name": "environment",
         "options": [],
         "query": {
-          "query": "label_values(genicly_http_requests_total{job=\"backend\",project=\"genicly\"}, env)",
+          "query": "label_values(buiavchiann_http_requests_total{job=\"backend\",project=\"buiavchiann\"}, env)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -712,8 +710,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Backend Overview",
-  "uid": "genicly-backend-overview",
+  "title": "backend-overview",
+  "uid": "buiavchiann-backend-overview",
   "version": 1,
   "weekStart": ""
 }

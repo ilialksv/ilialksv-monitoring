@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -352,34 +351,27 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "hosts"
+    "monitoring"
   ],
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "victoriametrics"
-        },
-        "definition": "label_values(node_cpu_seconds_total{job=\"node\"}, server)",
-        "includeAll": true,
-        "allValue": ".*",
-        "label": "Server",
-        "multi": false,
         "name": "server",
-        "options": [],
-        "query": {
-          "query": "label_values(node_cpu_seconds_total{job=\"node\"}, server)",
-          "refId": "StandardVariableQuery"
+        "type": "constant",
+        "query": "monitoring",
+        "hide": 2,
+        "current": {
+          "text": "monitoring",
+          "value": "monitoring"
         },
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
+        "options": [
+          {
+            "selected": true,
+            "text": "monitoring",
+            "value": "monitoring"
+          }
+        ],
+        "skipUrlSync": false
       }
     ]
   },
@@ -389,8 +381,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Host Overview",
-  "uid": "host-overview",
+  "title": "host-overview",
+  "uid": "monitoring-host-overview",
   "version": 1,
   "weekStart": ""
 }
