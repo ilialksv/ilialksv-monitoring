@@ -119,7 +119,9 @@ Parse edited JSON and YAML. Do not start containers as part of default validatio
 
 ### Connect A Server
 
-1. Deploy `agent/docker-compose.yml` on that Dokploy server.
+1. Deploy `agent/docker-compose.yml` on that Dokploy server, with the Compose
+   command `--force-recreate`: vmagent reads the bind-mounted `scrape.yml` only at
+   start.
 2. Set `SERVER_NAME`, remote-write URL, and the same basic-auth password as vmauth.
 3. Do not open exporter ports on the host firewall.
 

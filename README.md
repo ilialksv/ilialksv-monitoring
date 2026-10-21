@@ -67,6 +67,8 @@ In Dokploy, on the target deploy server, create a separate Compose application f
 - `VMAGENT_REMOTE_WRITE_URL=https://ingest.ilialksv.ru/api/v1/write`
 - Username and password match `VMAUTH_USERNAME` and `VMAUTH_PASSWORD` on the central stack
 
+Set the Compose command to `--force-recreate`: `scrape.yml` is a bind-mounted file that vmagent reads once at start, so a deploy that changes only `scrape.yml` otherwise leaves the old container running on the old config.
+
 Turn on auto-deploy for that Dokploy application. The root GitHub Action deploys only the central stack: it has a single `DOKPLOY_APPLICATION_ID`.
 
 The agent mounts the Docker socket read-only. That is still root-equivalent access on this server. Ports 9100, 9187, and 9121 are not published.
