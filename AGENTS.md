@@ -44,7 +44,8 @@ GlitchTip stays on the monitoring server and receives client/server errors
 ```
 
 Public ports: Grafana `3000`, GlitchTip `8000`, vmauth `8427`, DbGate `3000`, Umami
-`3000`, all via Dokploy domains. VictoriaMetrics, vmalert, Alertmanager,
+`3000`, all via Dokploy domains. Umami also answers on `go.ilialksv.ru`, where
+every path maps to its short-link route `/q/<slug>`. VictoriaMetrics, vmalert, Alertmanager,
 node_exporter, and the GlitchTip and Umami datastores are not published. On app servers only `db-tunnel` `2222` is
 published, filtered to the monitoring VPS IP by the provider firewall.
 

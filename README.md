@@ -33,6 +33,7 @@ Rename these in Dokploy if the names below do not fit. Each A record points at t
 - `ingest.ilialksv.ru` → vmauth, port `8427`
 - `db.ilialksv.ru` → DbGate, port `3000`
 - `umami.ilialksv.ru` → Umami, port `3000`
+- `go.ilialksv.ru` → Umami, port `3000`, internal path `/q` (short links only)
 
 `dokploy.ilialksv.ru` stays on the panel VPS.
 
@@ -154,6 +155,15 @@ Umami serves a read-only MCP endpoint at `https://umami.ilialksv.ru/mcp` when `U
    ```
 
 Revoke the key in **Settings → API keys** to cut the agent off.
+
+### Short links
+
+Umami Links turn `https://go.ilialksv.ru/<slug>` into a redirect that counts the click, then sends the visitor to the full URL. Put the UTM parameters into that destination URL, so the site's own Umami stats still see the source.
+
+1. Add an A record `go.ilialksv.ru` → the monitoring VPS.
+2. In Dokploy, add the domain `go.ilialksv.ru` → service `umami`, port `3000`, path `/`, internal path `/q`, HTTPS. Every path on this host lands on `/q/<slug>`, so the dashboard is not reachable through it.
+3. Redeploy: `LINKS_URL` in the compose makes the dashboard show links on that host.
+4. **Links → Create link** with a name, the destination URL and a slug. Clicks show on the link's page.
 
 ### Add a website
 

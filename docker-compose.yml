@@ -252,6 +252,9 @@ services:
       # "1" opens the read-only MCP endpoint at /mcp for agents; it takes an
       # API key from Settings → API keys. Empty keeps it closed.
       MCP_ENABLED: "${UMAMI_MCP_ENABLED:-}"
+      # Host the dashboard shows for short links. The go.ilialksv.ru domain
+      # maps every path to /q/<slug>, so a link reads go.ilialksv.ru/<slug>.
+      LINKS_URL: https://go.ilialksv.ru
     healthcheck:
       test:
         - CMD-SHELL
