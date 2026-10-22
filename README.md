@@ -141,6 +141,20 @@ The tracker is served as `/p.js` and sends to `/api/p`: ad blockers match Umami'
 1. Fill `UMAMI_*` in the stack env; generate the two secrets as `.env.example` shows. Add the domain `umami.ilialksv.ru` → service `umami`, port `3000`, and redeploy.
 2. Log in as `admin` / `umami`, change the password at once, and turn on two-factor authentication in the profile.
 
+### MCP for agents
+
+Umami serves a read-only MCP endpoint at `https://umami.ilialksv.ru/mcp` when `UMAMI_MCP_ENABLED=1`. It authenticates with an account API key, sent as `Authorization: Bearer umami_<key>`, and sees what that account sees.
+
+1. Set `UMAMI_MCP_ENABLED=1` in the stack env and redeploy.
+2. In Umami, create a user with the role `view-only` and give it access to the websites the agent should read. Log in as that user and create a key in **Settings → API keys**. A key of the admin account would read everything.
+3. Add the endpoint to the agent, for Claude Code:
+
+   ```bash
+   claude mcp add --transport http --scope user umami https://umami.ilialksv.ru/mcp --header "Authorization: Bearer umami_<key>"
+   ```
+
+Revoke the key in **Settings → API keys** to cut the agent off.
+
 ### Add a website
 
 1. **Websites → Add website** with the site's domain. Copy its website ID into that site's build secret `VITE_UMAMI_WEBSITE_ID`.

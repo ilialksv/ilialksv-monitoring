@@ -249,6 +249,9 @@ services:
       DISABLE_UPDATES: "1"
       # No external calls, website favicons included.
       PRIVATE_MODE: "1"
+      # "1" opens the read-only MCP endpoint at /mcp for agents; it takes an
+      # API key from Settings → API keys. Empty keeps it closed.
+      MCP_ENABLED: "${UMAMI_MCP_ENABLED:-}"
     healthcheck:
       test:
         - CMD-SHELL
