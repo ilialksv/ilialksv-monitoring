@@ -16,7 +16,9 @@ scrape_configs:
       # vmagent takes the refresh period from -promscrape.dockerSDCheckInterval
       # (agent/docker-compose.yml): v1.143 refuses refresh_interval here and
       # exits on start.
-      - host: tcp://docker-socket-proxy:2375
+      # The Docker API through docker-socket-proxy. vmagent wants http://
+      # here: with tcp:// it found no container at all in 2026-10.
+      - host: http://docker-socket-proxy:2375
         # A target for every network of a container, not only its first one:
         # a compose service can be on its project's default network first and
         # on dokploy-network second, and the keep rule below wants the latter.

@@ -88,6 +88,8 @@ its own `node-exporter:9100` and the `instance` label would otherwise collide.
 - Generic alerts must not mention a product name. Product metrics belong in `packs/`.
 - Never publish a database port. DbGate reaches databases only through
   `db-tunnel`; widen its `PermitOpen` only for a new database port.
+- DbGate is reachable only from `DBGATE_ALLOWED_IPS` (a Traefik middleware set on
+  its Dokploy domain). Never remove the middleware or widen it to everyone.
 - DbGate connections are added in its UI and stored in the `dbgate_data` volume;
   never remove that volume. Production connections are marked read only.
 - DbGate and Umami hold personal data: they stay on the monitoring VPS in Russia

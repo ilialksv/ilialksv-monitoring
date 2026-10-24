@@ -21,6 +21,17 @@ groups:
           summary: "{{ $labels.server }} stopped sending metrics"
           description: No metrics have arrived from server {{ $labels.server }} for more than 5 minutes. Its vmagent is down, crash-looping or cannot reach vmauth.
 
+      # The containers a server's vmagent discovers through Docker vanish
+      # together when discovery breaks, and their `up` series end instead of
+      # turning 0, so TargetDown stays quiet: in 2026-10 a wrong Docker API
+      # address hid every app for half an hour while host metrics flowed.
+      - alert: DiscoveredTargetsGone
+        expr: group by (server, job) (max_over_time(up{job!="node"}[6h])) unless group by (server, job) (up{job!="node"})
+        for: 10m
+        annotations:
+          summary: "{{ $labels.job }} on {{ $labels.server }} is no longer scraped"
+          description: Targets of job {{ $labels.job }} on server {{ $labels.server }} were scraped in the past 6 hours and have not been for 10 minutes. The container is gone, lost its monitoring labels, or the agent's Docker discovery fails (see the vmagent log).
+
   - name: hosts
     interval: 30s
     rules:

@@ -80,7 +80,7 @@ Set `POSTGRES_EXPORTER_DATA_SOURCE_NAME` in the application env, separate from `
 
 ## Database access
 
-DbGate at `db.ilialksv.ru` is the one panel for every project database. Databases stay unpublished: DbGate reaches each app server through SSH to the agent's `db-tunnel` container, which sits on `dokploy-network` and forwards to Dokploy service names.
+DbGate at `db.ilialksv.ru` is the one panel for every project database, open only from `DBGATE_ALLOWED_IPS`: the `dbgate-allowlist@docker` middleware, defined by a label on the service, is set in the domain's **Middlewares** in Dokploy. Databases stay unpublished: DbGate reaches each app server through SSH to the agent's `db-tunnel` container, which sits on `dokploy-network` and forwards to Dokploy service names.
 
 ```mermaid
 flowchart LR

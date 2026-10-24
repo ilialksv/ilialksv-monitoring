@@ -226,6 +226,12 @@ services:
       USAGE_ANALYTICS: "false"
     expose:
       - "3000"
+    # Who may open the panel at all: it reaches every database, so a password
+    # alone is not enough. The middleware is attached to the db.ilialksv.ru
+    # domain in Dokploy (Middlewares: dbgate-allowlist@docker); the addresses
+    # live in env, not in this public repository.
+    labels:
+      traefik.http.middlewares.dbgate-allowlist.ipallowlist.sourcerange: ${DBGATE_ALLOWED_IPS:?DBGATE_ALLOWED_IPS is required}
     volumes:
       - dbgate_data:/root/.dbgate
     networks:
