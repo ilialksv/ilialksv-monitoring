@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Trigger Dokploy deployment
-        uses: benbristow/dokploy-deploy-action@0.2.2
+        uses: benbristow/dokploy-deploy-action@3a2a16f0158b41377adf300c9dd6d3d396aa7586 # 0.2.2: holds DOKPLOY_API_TOKEN, so pinned to the commit
         with:
           api_token: ${{ secrets.DOKPLOY_API_TOKEN }}
           application_id: ${{ secrets.DOKPLOY_APPLICATION_ID }}

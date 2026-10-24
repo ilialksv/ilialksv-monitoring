@@ -16,10 +16,25 @@ services:
       - -remoteWrite.label=server=${SERVER_NAME:?SERVER_NAME is required}
     volumes:
       - ./scrape.yml:/etc/vmagent/scrape.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - agent
       - dokploy-network
+
+  # The Docker API as vmagent may use it: listing containers and networks,
+  # nothing else. A socket mounted :ro still takes every API call, which is
+  # root on this server; here only the proxy holds it, and only GETs of those
+  # endpoints pass. Not on dokploy-network and not published.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      NETWORKS: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - agent
 
   node-exporter:
     image: prom/node-exporter:v1.9.1

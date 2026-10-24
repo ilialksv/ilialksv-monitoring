@@ -72,7 +72,7 @@ Set the Compose command to `--force-recreate`: `scrape.yml` is a bind-mounted fi
 
 Turn on auto-deploy for that Dokploy application. The root GitHub Action deploys only the central stack: it has a single `DOKPLOY_APPLICATION_ID`.
 
-The agent mounts the Docker socket read-only. That is still root-equivalent access on this server. Ports 9100, 9187, and 9121 are not published.
+vmagent reads the Docker API through `docker-socket-proxy`, which holds the socket and passes only GETs of containers and networks: a socket mounted into vmagent itself, even read-only, would be root on this server. Ports 9100, 9187, and 9121 are not published.
 
 Backend `/metrics` is also closed by `METRICS_ALLOWED_IPS`. Set it to the `dokploy-network` subnet (`docker network inspect dokploy-network`). An empty list denies everyone. The agent calls the container directly, not through Traefik.
 

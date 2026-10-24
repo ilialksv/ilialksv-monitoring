@@ -14,13 +14,17 @@ x-glitchtip-environment: &glitchtip-environment
   DEFAULT_FROM_EMAIL: ${GLITCHTIP_DEFAULT_FROM_EMAIL}
   ENABLE_ADMIN: "${GLITCHTIP_ENABLE_ADMIN}"
   ENABLE_OPENAPI: "${GLITCHTIP_ENABLE_OPENAPI}"
-  ENABLE_ORGANIZATION_CREATION: "${ENABLE_ORGANIZATION_CREATION}"
+  # The instance is ours alone: nobody signs up and no new organization is
+  # made. Set here, not in env: an unset variable left both open in 2026-10.
+  ENABLE_USER_REGISTRATION: "false"
+  ENABLE_ORGANIZATION_CREATION: "false"
   GLITCHTIP_ENABLE_MCP: "${GLITCHTIP_ENABLE_MCP}"
   GLITCHTIP_ENABLE_DUCKDB: "${GLITCHTIP_ENABLE_DUCKDB}"
 
 services:
   grafana:
-    image: grafana/grafana-oss:11.5.2
+    # grafana/grafana is the OSS image; grafana-oss stopped getting releases.
+    image: grafana/grafana:12.4.13
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}

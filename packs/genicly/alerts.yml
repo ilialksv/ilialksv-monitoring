@@ -15,3 +15,30 @@ groups:
         annotations:
           summary: Genicly backend p95 latency is high
           description: Genicly {{ $labels.env }} p95 latency has been above 1 second for 10 minutes.
+
+  # Abuse of the free tier and of the sign-in mail. The counters come from the
+  # API (genicly-backend); the thresholds are far above an ordinary day, so a
+  # firing alert is worth a look at who signs up (`pnpm user:ban` there).
+  - name: genicly-abuse
+    interval: 1m
+    rules:
+      - alert: GeniclyStarterGrantBurst
+        expr: sum by (project, env) (increase(genicly_starter_grants_total{job="backend",project="genicly"}[1h])) > 50
+        for: 0m
+        annotations:
+          summary: Genicly gave out unusually many starter minutes
+          description: Genicly {{ $labels.env }} granted starter minutes to {{ $value | humanize }} new mailboxes in the past hour. Each is talk time we pay for; check the new accounts for a farm.
+
+      - alert: GeniclySignInMailFlood
+        expr: sum by (project, env) (increase(genicly_http_requests_total{job="backend",project="genicly",route=~"/api/v1/auth/email-otp/send-verification-otp/?",status_class="2xx"}[1h])) > 300
+        for: 0m
+        annotations:
+          summary: Genicly is mailing an unusual number of sign-in codes
+          description: Genicly {{ $labels.env }} sent {{ $value | humanize }} sign-in codes in the past hour. A flood spends the mailbox's reputation; check where the requests come from.
+
+      - alert: GeniclyInterviewsAtCapacity
+        expr: sum by (project, env) (increase(genicly_http_requests_total{job="backend",project="genicly",method="POST",route=~"/api/v1/interviews/?",status_class="5xx"}[15m])) > 3
+        for: 0m
+        annotations:
+          summary: Genicly turns candidates away from interviews
+          description: Genicly {{ $labels.env }} refused {{ $value | humanize }} interview starts in 15 minutes, most likely with every place under MAX_RUNNING_INTERVIEWS taken. Raise the limit if the voice server holds more, or look for a crowd of new accounts starting at once.

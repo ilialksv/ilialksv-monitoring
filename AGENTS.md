@@ -81,8 +81,9 @@ its own `node-exporter:9100` and the `instance` label would otherwise collide.
   user explicitly asks for that exact operation.
 - Do not publish VictoriaMetrics, vmalert, Alertmanager, exporter ports, or
   GlitchTip PostgreSQL/Valkey.
-- The agent mounts the Docker socket read-only. That is still root-equivalent on
-  the application server. Do not broaden it.
+- Only the agent's `docker-socket-proxy` mounts the Docker socket, and it lets
+  through GETs of containers and networks alone: vmagent's discovery needs no
+  more. Do not mount the socket into another service or enable more endpoints.
 - Keep Grafana datasource UID `victoriametrics` and stable dashboard `uid`s.
 - Generic alerts must not mention a product name. Product metrics belong in `packs/`.
 - Never publish a database port. DbGate reaches databases only through
